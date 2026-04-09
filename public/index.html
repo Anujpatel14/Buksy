@@ -1,0 +1,1021 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Buksy</title>
+    <link rel="icon" href="/img/logo.png" type="image/png" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="bg-grid"></div>
+
+    <!-- Sidebar overlay backdrop (mobile) -->
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+    <div class="app-shell">
+      <button id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle sidebar">
+        <i class="ph ph-list"></i>
+      </button>
+
+      <aside id="sidebar" class="sidebar">
+        <div class="sidebar-top">
+          <div class="brand">
+            <div class="brand-logo-wrap">
+              <img class="brand-logo" src="/img/logo.png" width="48" height="48" alt="Buksy" decoding="async" />
+            </div>
+            <div>
+              <p class="eyebrow">Personal AI Buddy</p>
+              <h1>Buksy</h1>
+            </div>
+          </div>
+          <p class="sidebar-copy">
+            Plan, write, organize, remember, and figure out the next best move without the clutter.
+          </p>
+          <nav class="sidebar-nav">
+            <button class="nav-link active" data-view-target="today">
+              <i class="ph ph-calendar-blank"></i>
+              <span>Today</span>
+            </button>
+            <button class="nav-link" data-view-target="schedule">
+              <i class="ph ph-calendar-dots"></i>
+              <span>Schedule</span>
+            </button>
+            <button class="nav-link" data-view-target="create">
+              <i class="ph ph-magic-wand"></i>
+              <span>Create</span>
+            </button>
+            <button class="nav-link" data-view-target="projects">
+              <i class="ph ph-kanban"></i>
+              <span>Projects</span>
+            </button>
+            <button class="nav-link" data-view-target="integrations">
+              <i class="ph ph-plugs-connected"></i>
+              <span>Integrations</span>
+            </button>
+            <button class="nav-link" data-view-target="memory">
+              <i class="ph ph-brain"></i>
+              <span>Memory</span>
+            </button>
+          </nav>
+        </div>
+
+        <div class="sidebar-cards">
+          <div class="sidebar-card">
+            <p class="eyebrow">Buksy mode</p>
+            <div id="modeBadge" class="mode-badge">Loading...</div>
+            <p id="contextSummary" class="sidebar-note">Waiting for Buksy...</p>
+          </div>
+          <div class="sidebar-card">
+            <p class="eyebrow">AI engine</p>
+            <div id="aiConnectionBadge" class="mode-badge">Checking...</div>
+            <p id="aiConnectionCopy" class="sidebar-note">
+              Buksy can use Ollama for natural chat, better routing, and richer replies.
+            </p>
+          </div>
+          <div class="sidebar-card">
+            <p class="eyebrow">ML health</p>
+            <div id="mlHealthCard" class="sidebar-note">Checking local ML...</div>
+          </div>
+          <div id="authCard" class="sidebar-card hidden">
+            <p class="eyebrow">Account</p>
+            <div id="authLocalNote" class="note-copy hidden">Running in local file mode. No login required.</div>
+            <div id="authLoggedOut" class="hidden">
+              <form id="loginForm" class="stack-form auth-form">
+                <label>
+                  Email
+                  <input type="email" name="email" required autocomplete="username" placeholder="you@example.com" />
+                </label>
+                <label>
+                  Password
+                  <input type="password" name="password" required autocomplete="current-password" minlength="8" placeholder="8+ characters" />
+                </label>
+                <button class="primary-button wide" type="submit">Log in</button>
+              </form>
+              <button id="registerBtn" class="soft-button wide" type="button">Create account</button>
+              <p id="authError" class="note-copy"></p>
+            </div>
+            <div id="authLoggedIn" class="hidden">
+              <p id="authEmail" class="sidebar-note"></p>
+              <button id="logoutBtn" class="ghost-button wide" type="button">Log out</button>
+            </div>
+          </div>
+          <div class="sidebar-card">
+            <p class="eyebrow">Status</p>
+            <p id="flash" class="flash"></p>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow topbar-eyebrow">One place for tasks, plans, docs, and memory</p>
+            <h2 id="pageTitle">Today</h2>
+          </div>
+          <div id="topMetrics" class="top-metrics"></div>
+        </header>
+
+        <section class="page active" data-view="today">
+          <div class="page-grid today-grid">
+            <article class="panel spotlight-panel hero-panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Tell Buksy what to do</p>
+                  <h3>Your AI buddy for moving life forward</h3>
+                </div>
+                <button id="refreshSuggestionBtn" class="ghost-button" type="button">
+                  <i class="ph ph-arrows-clockwise"></i> Refresh
+                </button>
+              </div>
+              <p class="hero-copy">
+                Ask Buksy to build a plan, create a to-do list, draft a reply, or tell you the smartest next step.
+              </p>
+              <div class="quick-prompts">
+                <button class="prompt-chip" type="button" data-chat-prompt="build launch plan doc">
+                  <i class="ph ph-rocket-launch"></i> Build launch plan doc
+                </button>
+                <button class="prompt-chip" type="button" data-chat-prompt="build to do list for app launch">
+                  <i class="ph ph-checks"></i> Build to-do list
+                </button>
+                <button class="prompt-chip" type="button" data-chat-prompt="reply to client about timeline">
+                  <i class="ph ph-envelope"></i> Draft client reply
+                </button>
+                <button class="prompt-chip" type="button" data-chat-prompt="what should i do next?">
+                  <i class="ph ph-compass"></i> What should I do next?
+                </button>
+              </div>
+              <div class="divider"></div>
+              <div id="suggestionCard"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Simple daily brief</p>
+                  <h3>What matters right now</h3>
+                </div>
+              </div>
+              <div id="dailyBriefCard"></div>
+              <div class="divider"></div>
+              <div id="statsGrid" class="stats-grid"></div>
+              <div class="divider"></div>
+              <h4 class="subheading">Top moves for today</h4>
+              <ol id="dailyPlan" class="plan-list"></ol>
+              <div class="divider"></div>
+              <div id="schedulePreviewCard"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Check in</p>
+                  <h3>How are you feeling?</h3>
+                </div>
+              </div>
+              <form id="checkinForm" class="stack-form">
+                <label>
+                  Energy
+                  <select name="energy">
+                    <option value="high">High</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="low">Low</option>
+                  </select>
+                </label>
+                <label>
+                  Focus
+                  <select name="focus">
+                    <option value="locked_in">Locked in</option>
+                    <option value="steady" selected>Steady</option>
+                    <option value="scattered">Scattered</option>
+                  </select>
+                </label>
+                <label>
+                  Mood
+                  <input type="text" name="mood" placeholder="Calm, tired, sharp..." />
+                </label>
+                <button class="primary-button" type="submit">
+                  <i class="ph ph-check"></i> Update
+                </button>
+              </form>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Quick capture</p>
+                  <h3>Add something to do</h3>
+                </div>
+              </div>
+              <form id="taskForm" class="task-form">
+                <label class="wide">
+                  Task
+                  <input type="text" name="title" required placeholder="Prepare client handoff" />
+                </label>
+                <label>
+                  Project
+                  <select name="projectId" class="project-select">
+                    <option value="">No project</option>
+                  </select>
+                </label>
+                <label>
+                  Category
+                  <input type="text" name="category" placeholder="work, admin, learning..." />
+                </label>
+                <label>
+                  Priority
+                  <select name="priority">
+                    <option value="high">High</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="low">Low</option>
+                  </select>
+                </label>
+                <label>
+                  Effort
+                  <select name="effort">
+                    <option value="high">High</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="low">Low</option>
+                  </select>
+                </label>
+                <label>
+                  Minutes
+                  <input type="number" name="durationMins" min="5" step="5" value="25" />
+                </label>
+                <label>
+                  Due date
+                  <input type="date" name="dueDate" />
+                </label>
+                <label>
+                  Start time
+                  <input type="time" name="scheduledTime" />
+                </label>
+                <label class="wide">
+                  Notes
+                  <input type="text" name="notes" placeholder="Context, blockers, or next step" />
+                </label>
+                <button class="primary-button wide" type="submit">
+                  <i class="ph ph-plus"></i> Add task
+                </button>
+              </form>
+            </article>
+
+            <article class="panel wide-panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Chat with Buksy</p>
+                  <h3>Ask for plans, docs, lists, or guidance</h3>
+                </div>
+              </div>
+              <div class="two-up">
+                <div>
+                  <div id="conversation" class="conversation"></div>
+                  <form id="chatForm" class="chat-form">
+                    <input id="chatInput" name="message" type="text" placeholder="Try: build launch plan doc" />
+                    <button class="primary-button" type="submit">
+                      <i class="ph ph-paper-plane-tilt"></i> Send
+                    </button>
+                  </form>
+                  <p id="chatAiNote" class="note-copy">
+                    With Ollama running, Buksy can understand looser requests like &ldquo;map out my app launch and give me first tasks.&rdquo;
+                  </p>
+                </div>
+                <div class="mini-stack">
+                  <div id="assistantActionCard"></div>
+                </div>
+              </div>
+            </article>
+
+            <article class="panel wide-panel">
+              <div class="task-columns">
+                <div>
+                  <h4 class="subheading"><i class="ph ph-circle-dashed"></i> Open tasks</h4>
+                  <div id="openTasks" class="task-list"></div>
+                </div>
+                <div>
+                  <h4 class="subheading"><i class="ph ph-check-circle"></i> Completed tasks</h4>
+                  <div id="completedTasks" class="task-list"></div>
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="page" data-view="create">
+          <div class="page-grid builder-grid">
+            <article class="panel wide-panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Ollama setup</p>
+                  <h3>Connect local AI to Buksy</h3>
+                </div>
+              </div>
+              <p class="note-copy">
+                Buksy still works without Ollama, but this unlocks freer chat like &ldquo;can you build my launch plan and first to-dos?&rdquo;
+              </p>
+              <form id="aiSetupForm" class="task-form ai-setup-form">
+                <label>
+                  Base URL
+                  <input type="text" name="baseUrl" placeholder="http://127.0.0.1:11434" />
+                </label>
+                <label>
+                  Model
+                  <input type="text" name="model" placeholder="qwen3" />
+                </label>
+                <button class="primary-button" type="submit">
+                  <i class="ph ph-floppy-disk"></i> Save Ollama settings
+                </button>
+              </form>
+              <div class="divider"></div>
+              <div id="aiSetupResult"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Doc builder</p>
+                  <h3>Create a usable document</h3>
+                </div>
+              </div>
+              <form id="docForm" class="stack-form">
+                <label>
+                  Prompt
+                  <textarea name="prompt" rows="5" placeholder="Build launch plan doc"></textarea>
+                </label>
+                <button class="primary-button" type="submit">
+                  <i class="ph ph-file-text"></i> Build document
+                </button>
+              </form>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">To-do builder</p>
+                  <h3>Turn a goal into tasks</h3>
+                </div>
+              </div>
+              <form id="todoBuilderForm" class="stack-form">
+                <label>
+                  Project
+                  <select name="projectId" class="project-select">
+                    <option value="">No project</option>
+                  </select>
+                </label>
+                <label>
+                  Prompt
+                  <textarea name="prompt" rows="5" placeholder="Build to do list for app launch"></textarea>
+                </label>
+                <button class="primary-button" type="submit">
+                  <i class="ph ph-list-checks"></i> Build to-do list
+                </button>
+              </form>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Research</p>
+                  <h3>Compare notes and ideas</h3>
+                </div>
+              </div>
+              <form id="researchForm" class="stack-form">
+                <label>
+                  Topic
+                  <input type="text" name="topic" required placeholder="Best pricing model for SaaS" />
+                </label>
+                <label>
+                  Sources or notes
+                  <textarea name="sourceText" rows="7" placeholder="Paste notes. Separate each source with --- on its own line."></textarea>
+                </label>
+                <button class="primary-button" type="submit">
+                  <i class="ph ph-magnifying-glass"></i> Build brief
+                </button>
+              </form>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Message draft</p>
+                  <h3>Write a better reply</h3>
+                </div>
+              </div>
+              <form id="negotiationForm" class="stack-form">
+                <label>
+                  Situation
+                  <textarea name="scenario" rows="5" placeholder="Need to reset client expectations on timeline"></textarea>
+                </label>
+                <label>
+                  Tone
+                  <select name="tone">
+                    <option value="calm">Calm</option>
+                    <option value="warm">Warm</option>
+                    <option value="assertive">Assertive</option>
+                  </select>
+                </label>
+                <label>
+                  Desired outcome
+                  <input type="text" name="desiredOutcome" placeholder="Protect scope and keep trust high" />
+                </label>
+                <button class="primary-button" type="submit">
+                  <i class="ph ph-pencil-line"></i> Draft reply
+                </button>
+              </form>
+            </article>
+
+            <article class="panel wide-panel">
+              <div class="result-grid">
+                <div class="mini-card">
+                  <p class="panel-kicker">Document</p>
+                  <div id="docResult"></div>
+                </div>
+                <div class="mini-card">
+                  <p class="panel-kicker">To-do list</p>
+                  <div id="todoBuilderResult"></div>
+                </div>
+                <div class="mini-card">
+                  <p class="panel-kicker">Research brief</p>
+                  <div id="researchResult"></div>
+                </div>
+                <div class="mini-card">
+                  <p class="panel-kicker">Drafted reply</p>
+                  <div id="negotiationResult"></div>
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="page" data-view="projects">
+          <div class="page-grid projects-grid">
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Project</p>
+                  <h3>Create a space for work</h3>
+                </div>
+              </div>
+              <form id="projectForm" class="stack-form">
+                <label>
+                  Project name
+                  <input type="text" name="name" required placeholder="Startup v1" />
+                </label>
+                <label>
+                  Description
+                  <textarea name="description" rows="4" placeholder="What this project is about"></textarea>
+                </label>
+                <label>
+                  Due date
+                  <input type="date" name="dueDate" />
+                </label>
+                <label>
+                  Estimated hours
+                  <input type="number" name="estimatedHours" min="1" max="1000" placeholder="40" />
+                </label>
+                <label>
+                  Max hours per day
+                  <input type="number" name="maxHoursPerDay" min="1" max="12" value="6" />
+                </label>
+                <label>
+                  Tags
+                  <input type="text" name="tags" placeholder="startup, client, learning" />
+                </label>
+                <button class="primary-button" type="submit">
+                  <i class="ph ph-plus"></i> Create project
+                </button>
+              </form>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Goal</p>
+                  <h3>Reverse plan a target</h3>
+                </div>
+              </div>
+              <form id="goalForm" class="stack-form">
+                <label>
+                  Project
+                  <select name="projectId" class="project-select">
+                    <option value="">No project</option>
+                  </select>
+                </label>
+                <label>
+                  Goal
+                  <input type="text" name="title" required placeholder="Launch my app" />
+                </label>
+                <label>
+                  Target days
+                  <input type="number" name="targetDays" min="3" max="180" value="20" />
+                </label>
+                <label>
+                  Objective
+                  <textarea name="objective" rows="4" placeholder="What does done look like?"></textarea>
+                </label>
+                <button class="primary-button" type="submit">
+                  <i class="ph ph-map-trifold"></i> Build roadmap
+                </button>
+              </form>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Time fit</p>
+                  <h3>Find the best next block</h3>
+                </div>
+              </div>
+              <form id="constraintForm" class="stack-form">
+                <label>
+                  Project
+                  <select name="projectId" class="project-select">
+                    <option value="">Any project</option>
+                  </select>
+                </label>
+                <label>
+                  Free minutes
+                  <input type="number" name="availableMinutes" min="15" max="480" value="120" />
+                </label>
+                <label>
+                  Energy
+                  <select name="energy">
+                    <option value="high">High</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="low">Low</option>
+                  </select>
+                </label>
+                <button class="primary-button" type="submit">
+                  <i class="ph ph-timer"></i> Find best fit
+                </button>
+              </form>
+              <div class="divider"></div>
+              <div id="constraintResult"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Decision help</p>
+                  <h3>Compare two paths</h3>
+                </div>
+              </div>
+              <form id="decisionForm" class="stack-form">
+                <label>
+                  Decision
+                  <input type="text" name="decision" placeholder="Choose the next product focus" />
+                </label>
+                <label>
+                  Option A
+                  <textarea name="optionA" rows="4" placeholder="Describe option A"></textarea>
+                </label>
+                <label>
+                  Option B
+                  <textarea name="optionB" rows="4" placeholder="Describe option B"></textarea>
+                </label>
+                <label>
+                  Horizon days
+                  <input type="number" name="horizonDays" min="7" max="180" value="90" />
+                </label>
+                <button class="primary-button" type="submit">
+                  <i class="ph ph-scales"></i> Analyze
+                </button>
+              </form>
+              <div class="divider"></div>
+              <div id="decisionResult"></div>
+            </article>
+
+            <article class="panel wide-panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Projects</p>
+                  <h3>What Buksy is tracking</h3>
+                </div>
+              </div>
+              <div id="projectCards" class="project-grid"></div>
+              <div class="divider"></div>
+              <div id="goalCards" class="goal-grid"></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="page" data-view="schedule">
+          <div class="page-grid schedule-grid">
+            <article class="panel wide-panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Full plan until deadlines</p>
+                  <h3>Day-by-Day Schedule</h3>
+                </div>
+                <div class="action-row">
+                  <button id="scheduleRebalanceBtn" class="soft-button" type="button">
+                    <i class="ph ph-arrows-clockwise"></i> Rebalance
+                  </button>
+                </div>
+              </div>
+              <div id="scheduleWarnings" class="schedule-warnings"></div>
+              <div id="scheduleSummary" class="schedule-summary"></div>
+              <div id="scheduleTimeline" class="schedule-timeline"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">At-risk projects</p>
+                  <h3>Deadline Alerts</h3>
+                </div>
+              </div>
+              <div id="scheduleAtRisk"></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="page" data-view="memory">
+          <div class="page-grid memory-grid">
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">File helper</p>
+                  <h3>Analyze a file or pasted text</h3>
+                </div>
+              </div>
+              <form id="fileForm" class="stack-form">
+                <label>
+                  Project
+                  <select name="projectId" class="project-select">
+                    <option value="">No project</option>
+                  </select>
+                </label>
+                <label>
+                  Primary file
+                  <input type="file" name="file" id="fileInput" />
+                </label>
+                <label>
+                  Compare with file
+                  <input type="file" name="compareFile" id="compareFileInput" />
+                </label>
+                <label>
+                  Manual extracted text
+                  <textarea name="manualText" rows="6" placeholder="Paste text here for PDFs, docs, or images if needed"></textarea>
+                </label>
+                <label>
+                  Save to memory
+                  <select name="saveToKnowledge">
+                    <option value="true">Yes</option>
+                    <option value="false" selected>No</option>
+                  </select>
+                </label>
+                <button class="primary-button" type="submit">
+                  <i class="ph ph-scan"></i> Analyze
+                </button>
+              </form>
+              <div class="divider"></div>
+              <div id="fileResult"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Meeting notes</p>
+                  <h3>Turn notes into decisions and tasks</h3>
+                </div>
+              </div>
+              <form id="meetingForm" class="stack-form">
+                <label>
+                  Meeting title
+                  <input type="text" name="title" placeholder="Sprint review" />
+                </label>
+                <label>
+                  Transcript or notes
+                  <textarea name="transcript" rows="10" placeholder="Paste transcript or voice-note transcription"></textarea>
+                </label>
+                <button class="primary-button" type="submit">
+                  <i class="ph ph-note"></i> Summarize
+                </button>
+              </form>
+              <div class="divider"></div>
+              <div id="meetingResult"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Save to memory</p>
+                  <h3>Store a note or reference</h3>
+                </div>
+              </div>
+              <form id="knowledgeForm" class="stack-form">
+                <label>
+                  Project
+                  <select name="projectId" class="project-select">
+                    <option value="">No project</option>
+                  </select>
+                </label>
+                <label>
+                  Title
+                  <input type="text" name="title" placeholder="Healthcare startup idea notes" />
+                </label>
+                <label>
+                  Category
+                  <input type="text" name="category" placeholder="ideas, research, docs, decisions" />
+                </label>
+                <label>
+                  Content
+                  <textarea name="content" rows="8" placeholder="Store notes, snippets, or references"></textarea>
+                </label>
+                <button class="primary-button" type="submit">
+                  <i class="ph ph-floppy-disk"></i> Save
+                </button>
+              </form>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Search memory</p>
+                  <h3>Find saved work fast</h3>
+                </div>
+              </div>
+              <form id="knowledgeQueryForm" class="stack-form">
+                <label>
+                  Project
+                  <select name="projectId" class="project-select">
+                    <option value="">Any project</option>
+                  </select>
+                </label>
+                <label>
+                  Category
+                  <input type="text" name="category" placeholder="research, ideas, docs" />
+                </label>
+                <label>
+                  Search
+                  <input type="text" name="search" placeholder="Find client launch notes" />
+                </label>
+                <button class="primary-button" type="submit">
+                  <i class="ph ph-magnifying-glass"></i> Search
+                </button>
+              </form>
+              <div class="divider"></div>
+              <div id="knowledgeResults"></div>
+            </article>
+
+            <article class="panel wide-panel">
+              <div class="result-grid">
+                <div class="mini-card">
+                  <p class="panel-kicker">How Buksy learns</p>
+                  <div id="behaviorModelCard"></div>
+                  <div class="divider"></div>
+                  <div id="reflectionCard"></div>
+                  <div class="divider"></div>
+                  <ul id="learningInsights" class="insight-list"></ul>
+                </div>
+                <div class="mini-card">
+                  <p class="panel-kicker">Signals</p>
+                  <div id="weaknessCard"></div>
+                  <div class="divider"></div>
+                  <div id="goalHealthCard"></div>
+                </div>
+                <div class="mini-card">
+                  <p class="panel-kicker">Memory graph</p>
+                  <div id="memoryGraphCard"></div>
+                  <div class="divider"></div>
+                  <div id="trendWatchCard"></div>
+                </div>
+                <div class="mini-card">
+                  <p class="panel-kicker">Recent history</p>
+                  <div id="artifactStream"></div>
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="page" data-view="integrations">
+          <div class="page-grid integrations-grid">
+            <article class="panel integration-oauth-banner">
+              <p class="panel-kicker">OAuth redirects</p>
+              <div id="oauthCallbackHints" class="note-copy"></div>
+              <p class="note-copy">
+                Set <code>BUKSY_PUBLIC_URL</code> in <code>.env</code> to your public app URL (e.g. <code>https://your-domain.com</code>) so provider redirect URIs match.
+              </p>
+            </article>
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Jira Cloud</p>
+                  <h3>Connect your Jira board</h3>
+                </div>
+              </div>
+              <form id="jiraConnectForm" class="stack-form">
+                <label>
+                  Jira Base URL
+                  <input type="text" name="baseUrl" placeholder="https://yourcompany.atlassian.net" />
+                </label>
+                <label>
+                  Email
+                  <input type="email" name="email" placeholder="you@company.com" />
+                </label>
+                <label>
+                  API Token
+                  <input type="password" name="apiToken" placeholder="Jira API token" />
+                </label>
+                <label>
+                  Board ID
+                  <input type="text" name="boardId" placeholder="e.g., 1" />
+                </label>
+                <button class="primary-button" type="submit">
+                  <i class="ph ph-plugs-connected"></i> Connect Jira
+                </button>
+              </form>
+              <div class="divider"></div>
+              <div id="jiraStatus"></div>
+              <button id="jiraSyncBtn" class="soft-button wide hidden" type="button">
+                <i class="ph ph-arrows-clockwise"></i> Sync Jira Tasks
+              </button>
+              <div id="jiraSyncResult"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">GitHub</p>
+                  <h3>Connect your repositories</h3>
+                </div>
+              </div>
+              <button type="button" id="githubOAuthBtn" class="soft-button wide hidden oauth-connect-btn">
+                <i class="ph ph-github-logo"></i> Connect with GitHub (OAuth)
+              </button>
+              <p id="githubOauthOrPat" class="note-copy hidden">or use a personal access token</p>
+              <form id="githubConnectForm" class="stack-form">
+                <label>
+                  Personal Access Token
+                  <input type="password" name="token" placeholder="ghp_xxxxxxxxxxxx" />
+                </label>
+                <label>
+                  Repos to track (comma-separated)
+                  <input type="text" name="repos" placeholder="owner/repo1, owner/repo2" />
+                </label>
+                <button class="primary-button" type="submit">
+                  <i class="ph ph-github-logo"></i> Connect GitHub
+                </button>
+              </form>
+              <div class="divider"></div>
+              <div id="githubStatus"></div>
+              <button id="githubRefreshBtn" class="soft-button wide hidden" type="button">
+                <i class="ph ph-arrows-clockwise"></i> Refresh Stats
+              </button>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Notion</p>
+                  <h3>Import a tasks database</h3>
+                </div>
+              </div>
+              <button type="button" id="notionOAuthBtn" class="soft-button wide hidden oauth-connect-btn">
+                <i class="ph ph-book-bookmark"></i> Connect Notion (OAuth)
+              </button>
+              <p id="notionOauthOrPat" class="note-copy hidden">or paste an internal integration token</p>
+              <p class="note-copy">
+                For the token field: create a Notion integration, share your database with it, then paste the token and database ID.
+              </p>
+              <form id="notionConnectForm" class="stack-form">
+                <label>
+                  Integration token
+                  <input type="password" name="token" placeholder="secret_..." autocomplete="off" />
+                </label>
+                <label>
+                  Default database ID
+                  <input type="text" name="databaseId" placeholder="32-char Notion database UUID" />
+                </label>
+                <button class="primary-button" type="submit">
+                  <i class="ph ph-plugs-connected"></i> Connect Notion
+                </button>
+              </form>
+              <div class="divider"></div>
+              <div id="notionStatus"></div>
+              <div class="action-row" style="flex-wrap: wrap; gap: 0.5rem;">
+                <button id="notionListBtn" class="soft-button" type="button">
+                  <i class="ph ph-list"></i> List accessible databases
+                </button>
+                <label class="inline-check" style="display: flex; align-items: center; gap: 0.35rem;">
+                  <input id="notionCreateProject" type="checkbox" />
+                  <span>Create Buksy project on sync</span>
+                </label>
+              </div>
+              <div id="notionDatabaseList" class="note-copy" style="margin-top: 0.5rem;"></div>
+              <button id="notionSyncBtn" class="soft-button wide hidden" type="button">
+                <i class="ph ph-arrows-clockwise"></i> Sync from Notion
+              </button>
+              <div id="notionSyncResult"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Google Calendar</p>
+                  <h3>Free / busy hints</h3>
+                </div>
+              </div>
+              <p class="note-copy">
+                Buksy pulls today’s busy time from your primary calendar and slightly lowers suggested task capacity when you are already blocked.
+              </p>
+              <button type="button" id="googleOAuthBtn" class="primary-button wide hidden oauth-connect-btn">
+                <i class="ph ph-calendar-plus"></i> Connect Google Calendar (OAuth)
+              </button>
+              <div id="googleCalStatus" class="note-copy" style="margin-top: 0.75rem;"></div>
+            </article>
+
+            <article class="panel wide-panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">GitHub Activity</p>
+                  <h3>Commits, PRs & Repository Stats</h3>
+                </div>
+              </div>
+              <div id="githubDashboard"></div>
+            </article>
+          </div>
+        </section>
+      </main>
+    </div>
+    <script src="/app.js"></script>
+    <script>
+      // ---- Sidebar Toggle Logic (pure JS, no motion library dependency) ----
+      (function() {
+        var sidebar = document.getElementById('sidebar');
+        var overlay = document.getElementById('sidebarOverlay');
+        var toggleBtn = document.getElementById('sidebarToggle');
+        var toggleIcon = toggleBtn.querySelector('i');
+        var appShell = document.querySelector('.app-shell');
+        var isOpen = false;
+
+        function openSidebar() {
+          isOpen = true;
+          sidebar.classList.add('open');
+          overlay.classList.add('visible');
+          toggleIcon.className = 'ph ph-x';
+        }
+
+        function closeSidebar() {
+          isOpen = false;
+          sidebar.classList.remove('open');
+          overlay.classList.remove('visible');
+          toggleIcon.className = 'ph ph-list';
+        }
+
+        toggleBtn.addEventListener('click', function() {
+          if (isOpen) {
+            closeSidebar();
+          } else {
+            openSidebar();
+          }
+        });
+
+        overlay.addEventListener('click', function() {
+          closeSidebar();
+        });
+
+        // On nav link click, close sidebar on mobile
+        document.querySelectorAll('.nav-link').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            if (window.innerWidth < 1024) {
+              closeSidebar();
+            }
+          });
+        });
+      })();
+
+      // ---- Entrance Animations (CSS-driven, triggered by class) ----
+      (function() {
+        // Stagger animate panels on page load
+        var panels = document.querySelectorAll('.panel');
+        panels.forEach(function(panel, i) {
+          panel.style.animationDelay = (i * 0.06) + 's';
+          panel.classList.add('animate-in');
+        });
+
+        // Re-animate panels on tab switch
+        document.querySelectorAll('.nav-link').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            setTimeout(function() {
+              var activePage = document.querySelector('.page.active');
+              if (activePage) {
+                var pagePanels = activePage.querySelectorAll('.panel');
+                pagePanels.forEach(function(p, i) {
+                  p.classList.remove('animate-in');
+                  void p.offsetWidth; // trigger reflow
+                  p.style.animationDelay = (i * 0.06) + 's';
+                  p.classList.add('animate-in');
+                });
+              }
+            }, 20);
+          });
+        });
+      })();
+    </script>
+  </body>
+</html>

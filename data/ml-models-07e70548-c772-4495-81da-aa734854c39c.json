@@ -1,0 +1,39 @@
+{
+  "updatedAt": "2026-04-08T07:41:56.765Z",
+  "stats": {
+    "totalEvents": 56,
+    "trainedAt": "2026-04-08T07:41:56.765Z"
+  },
+  "schedule": {
+    "weights": {
+      "duePressure": 0,
+      "projectPressure": 0,
+      "energyMatch": 0,
+      "focusMatch": 0,
+      "durationFit": 0,
+      "completionRate": 0
+    },
+    "bias": 0
+  },
+  "routing": {
+    "priors": {},
+    "tokenWeights": {}
+  },
+  "generation": {
+    "outputAffinity": {
+      "task": 0.2,
+      "plan": 0,
+      "doc": 0.2,
+      "research": 0
+    },
+    "styleAffinity": {
+      "concise": 0,
+      "detailed": 0.16,
+      "checklist": 0
+    }
+  },
+  "mysqlAuthPlan": {
+    "draftedAt": null,
+    "summary": ""
+  }
+}

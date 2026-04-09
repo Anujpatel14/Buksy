@@ -1,0 +1,126 @@
+{"id":"1775562928984-46fri8","createdAt":"2026-04-07T11:55:28.984Z","type":"chat_message","text":"build launch plan doc"}
+{"id":"1775562928985-5cumyp","createdAt":"2026-04-07T11:55:28.985Z","type":"chat_style_signal","style":"detailed","outputKind":"doc"}
+{"id":"1775562928987-1hbx6z","createdAt":"2026-04-07T11:55:28.987Z","type":"generation_feedback","outputKind":"doc","kind":"accepted","source":"assistant_execute_document"}
+{"id":"1775562928992-fxllx5","createdAt":"2026-04-07T11:55:28.992Z","type":"chat_message","text":"build to do list for app launch"}
+{"id":"1775562928993-q5rc5b","createdAt":"2026-04-07T11:55:28.993Z","type":"chat_style_signal","style":"detailed","outputKind":"plan"}
+{"id":"1775562928995-14fmnw","createdAt":"2026-04-07T11:55:28.995Z","type":"task_created","taskId":"847edbd3-0c55-469e-b3ce-d88ca4e7d317","projectId":null,"goalId":null,"payload":{"priority":"high","effort":"high","durationMins":50,"dueDate":null}}
+{"id":"1775562928996-fw4d8u","createdAt":"2026-04-07T11:55:28.996Z","type":"task_created","taskId":"ddc13865-57a8-499d-9187-2584e28e400e","projectId":null,"goalId":null,"payload":{"priority":"high","effort":"high","durationMins":90,"dueDate":null}}
+{"id":"1775562928997-1a3yi0","createdAt":"2026-04-07T11:55:28.997Z","type":"task_created","taskId":"ebb77039-442b-43a1-b4c9-a5a82db6edce","projectId":null,"goalId":null,"payload":{"priority":"medium","effort":"medium","durationMins":40,"dueDate":null}}
+{"id":"1775562928997-al2ya0","createdAt":"2026-04-07T11:55:28.997Z","type":"task_created","taskId":"ce961679-ef52-49de-ae2c-87a0f616a8eb","projectId":null,"goalId":null,"payload":{"priority":"medium","effort":"low","durationMins":20,"dueDate":null}}
+{"id":"1775562928998-8decuw","createdAt":"2026-04-07T11:55:28.998Z","type":"task_created","taskId":"2e89e2b9-ebb6-42cd-9f6b-f4076e69d468","projectId":null,"goalId":null,"payload":{"priority":"high","effort":"medium","durationMins":45,"dueDate":null}}
+{"id":"1775562928999-1auw6s","createdAt":"2026-04-07T11:55:28.999Z","type":"generation_feedback","outputKind":"task","kind":"accepted","source":"assistant_execute_todo"}
+{"id":"1775562929003-po0fyi","createdAt":"2026-04-07T11:55:29.003Z","type":"chat_message","text":"Can you map out a launch plan for my app?"}
+{"id":"1775562929006-sb1pnv","createdAt":"2026-04-07T11:55:29.006Z","type":"chat_route_selected","provider":"ollama","intent":"build_document","confidence":0.93,"text":"Can you map out a launch plan for my app?"}
+{"id":"1775562929007-op6739","createdAt":"2026-04-07T11:55:29.007Z","type":"chat_style_signal","style":"detailed","outputKind":"doc"}
+{"id":"1775562929008-meoqjw","createdAt":"2026-04-07T11:55:29.008Z","type":"generation_feedback","outputKind":"doc","kind":"accepted","source":"assistant_execute_document"}
+{"id":"1775562929011-mno0sq","createdAt":"2026-04-07T11:55:29.011Z","type":"chat_message","text":"I want to launch my app in 20 days."}
+{"id":"1775562929013-l703fn","createdAt":"2026-04-07T11:55:29.013Z","type":"chat_route_selected","provider":"ollama","intent":"create_goal","confidence":0.91,"text":"I want to launch my app in 20 days."}
+{"id":"1775562929014-czq96d","createdAt":"2026-04-07T11:55:29.014Z","type":"chat_style_signal","style":"detailed","outputKind":"plan"}
+{"id":"1775563179355-jukzq1","createdAt":"2026-04-07T11:59:39.355Z","type":"chat_message","text":"build launch plan doc"}
+{"id":"1775563179357-0q4qb3","createdAt":"2026-04-07T11:59:39.357Z","type":"chat_style_signal","style":"detailed","outputKind":"doc"}
+{"id":"1775563179360-1wnyvi","createdAt":"2026-04-07T11:59:39.360Z","type":"generation_feedback","outputKind":"doc","kind":"accepted","source":"assistant_execute_document"}
+{"id":"1775563179364-ckqs1w","createdAt":"2026-04-07T11:59:39.364Z","type":"chat_message","text":"build to do list for app launch"}
+{"id":"1775563179366-w4wite","createdAt":"2026-04-07T11:59:39.366Z","type":"chat_style_signal","style":"detailed","outputKind":"plan"}
+{"id":"1775563179368-0pkjx7","createdAt":"2026-04-07T11:59:39.368Z","type":"task_created","taskId":"af3b60e1-c37b-4439-bc61-30894ee8b4e1","projectId":null,"goalId":null,"payload":{"priority":"high","effort":"high","durationMins":50,"dueDate":null}}
+{"id":"1775563179369-a8pshu","createdAt":"2026-04-07T11:59:39.369Z","type":"task_created","taskId":"5ed94000-65b4-4543-9574-ca83874c8773","projectId":null,"goalId":null,"payload":{"priority":"high","effort":"high","durationMins":90,"dueDate":null}}
+{"id":"1775563179370-0bjf4o","createdAt":"2026-04-07T11:59:39.370Z","type":"task_created","taskId":"8e1f0957-f258-4e76-a583-43d489a627d8","projectId":null,"goalId":null,"payload":{"priority":"medium","effort":"medium","durationMins":40,"dueDate":null}}
+{"id":"1775563179370-18hsaf","createdAt":"2026-04-07T11:59:39.370Z","type":"task_created","taskId":"209f7f04-1d1d-4604-baf3-cee2f8ca01e0","projectId":null,"goalId":null,"payload":{"priority":"medium","effort":"low","durationMins":20,"dueDate":null}}
+{"id":"1775563179371-uy270s","createdAt":"2026-04-07T11:59:39.371Z","type":"task_created","taskId":"0e891ae2-73ad-4091-bf8f-200625d4ac28","projectId":null,"goalId":null,"payload":{"priority":"high","effort":"medium","durationMins":45,"dueDate":null}}
+{"id":"1775563179372-8l79cn","createdAt":"2026-04-07T11:59:39.372Z","type":"generation_feedback","outputKind":"task","kind":"accepted","source":"assistant_execute_todo"}
+{"id":"1775563179376-l7f7er","createdAt":"2026-04-07T11:59:39.376Z","type":"chat_message","text":"Can you map out a launch plan for my app?"}
+{"id":"1775563179378-vxhe37","createdAt":"2026-04-07T11:59:39.378Z","type":"chat_route_selected","provider":"ollama","intent":"build_document","confidence":0.93,"text":"Can you map out a launch plan for my app?"}
+{"id":"1775563179379-sifcpe","createdAt":"2026-04-07T11:59:39.379Z","type":"chat_style_signal","style":"detailed","outputKind":"doc"}
+{"id":"1775563179380-korvlq","createdAt":"2026-04-07T11:59:39.381Z","type":"generation_feedback","outputKind":"doc","kind":"accepted","source":"assistant_execute_document"}
+{"id":"1775563179383-2khv2a","createdAt":"2026-04-07T11:59:39.383Z","type":"chat_message","text":"I want to launch my app in 20 days."}
+{"id":"1775563179385-1itoui","createdAt":"2026-04-07T11:59:39.385Z","type":"chat_route_selected","provider":"ollama","intent":"create_goal","confidence":0.91,"text":"I want to launch my app in 20 days."}
+{"id":"1775563179386-ajib7b","createdAt":"2026-04-07T11:59:39.386Z","type":"chat_style_signal","style":"detailed","outputKind":"plan"}
+{"id":"1775563508440-21ojkt","createdAt":"2026-04-07T12:05:08.440Z","type":"chat_message","text":"build launch plan doc"}
+{"id":"1775563508443-z9zufn","createdAt":"2026-04-07T12:05:08.443Z","type":"chat_style_signal","style":"detailed","outputKind":"doc"}
+{"id":"1775563508446-zsuwda","createdAt":"2026-04-07T12:05:08.446Z","type":"generation_feedback","outputKind":"doc","kind":"accepted","source":"assistant_execute_document"}
+{"id":"1775563508450-csyrvq","createdAt":"2026-04-07T12:05:08.450Z","type":"chat_message","text":"build to do list for app launch"}
+{"id":"1775563508451-vg6p8s","createdAt":"2026-04-07T12:05:08.451Z","type":"chat_style_signal","style":"detailed","outputKind":"plan"}
+{"id":"1775563508453-v2vdyg","createdAt":"2026-04-07T12:05:08.453Z","type":"task_created","taskId":"a792a0f9-284b-44cc-9117-3eee6f8f2f16","projectId":null,"goalId":null,"payload":{"priority":"high","effort":"high","durationMins":50,"dueDate":null}}
+{"id":"1775563508454-xhz3zr","createdAt":"2026-04-07T12:05:08.454Z","type":"task_created","taskId":"5a5e3029-c0f9-4d2c-8701-d0a3353021c5","projectId":null,"goalId":null,"payload":{"priority":"high","effort":"high","durationMins":90,"dueDate":null}}
+{"id":"1775563508454-6q1htk","createdAt":"2026-04-07T12:05:08.454Z","type":"task_created","taskId":"6ea40e59-ab30-486d-a131-a599ca378942","projectId":null,"goalId":null,"payload":{"priority":"medium","effort":"medium","durationMins":40,"dueDate":null}}
+{"id":"1775563508455-6eddq4","createdAt":"2026-04-07T12:05:08.455Z","type":"task_created","taskId":"48964e26-3497-4a42-b458-770bb96b78f3","projectId":null,"goalId":null,"payload":{"priority":"medium","effort":"low","durationMins":20,"dueDate":null}}
+{"id":"1775563508456-9puln3","createdAt":"2026-04-07T12:05:08.456Z","type":"task_created","taskId":"971514ad-dcbb-43c5-8afe-7b565a7a7a4d","projectId":null,"goalId":null,"payload":{"priority":"high","effort":"medium","durationMins":45,"dueDate":null}}
+{"id":"1775563508458-12fl2c","createdAt":"2026-04-07T12:05:08.458Z","type":"generation_feedback","outputKind":"task","kind":"accepted","source":"assistant_execute_todo"}
+{"id":"1775563508461-dwk7pk","createdAt":"2026-04-07T12:05:08.461Z","type":"chat_message","text":"Can you map out a launch plan for my app?"}
+{"id":"1775563508463-00x8tu","createdAt":"2026-04-07T12:05:08.463Z","type":"chat_route_selected","provider":"ollama","intent":"build_document","confidence":0.93,"text":"Can you map out a launch plan for my app?"}
+{"id":"1775563508464-saikxf","createdAt":"2026-04-07T12:05:08.464Z","type":"chat_style_signal","style":"detailed","outputKind":"doc"}
+{"id":"1775563508466-w2w8dm","createdAt":"2026-04-07T12:05:08.466Z","type":"generation_feedback","outputKind":"doc","kind":"accepted","source":"assistant_execute_document"}
+{"id":"1775563508469-onp6h6","createdAt":"2026-04-07T12:05:08.469Z","type":"chat_message","text":"I want to launch my app in 20 days."}
+{"id":"1775563508470-dj0jpu","createdAt":"2026-04-07T12:05:08.470Z","type":"chat_route_selected","provider":"ollama","intent":"create_goal","confidence":0.91,"text":"I want to launch my app in 20 days."}
+{"id":"1775563508471-5bgo1t","createdAt":"2026-04-07T12:05:08.471Z","type":"chat_style_signal","style":"detailed","outputKind":"plan"}
+{"id":"1775563900715-m0a2iw","createdAt":"2026-04-07T12:11:40.715Z","type":"chat_message","text":"build launch plan doc"}
+{"id":"1775563900717-s3m21p","createdAt":"2026-04-07T12:11:40.717Z","type":"chat_style_signal","style":"detailed","outputKind":"doc"}
+{"id":"1775563900720-4zowye","createdAt":"2026-04-07T12:11:40.720Z","type":"generation_feedback","outputKind":"doc","kind":"accepted","source":"assistant_execute_document"}
+{"id":"1775563900724-0m4uj3","createdAt":"2026-04-07T12:11:40.724Z","type":"chat_message","text":"build to do list for app launch"}
+{"id":"1775563900725-i0bl78","createdAt":"2026-04-07T12:11:40.725Z","type":"chat_style_signal","style":"detailed","outputKind":"plan"}
+{"id":"1775563900727-acv2dv","createdAt":"2026-04-07T12:11:40.727Z","type":"task_created","taskId":"a660fcf3-8bee-4a46-9f83-2107a3365ef7","projectId":null,"goalId":null,"payload":{"priority":"high","effort":"high","durationMins":50,"dueDate":null}}
+{"id":"1775563900727-gqyu4g","createdAt":"2026-04-07T12:11:40.727Z","type":"task_created","taskId":"1d1eabf1-d914-4928-b4c2-011b4ff2ece8","projectId":null,"goalId":null,"payload":{"priority":"high","effort":"high","durationMins":90,"dueDate":null}}
+{"id":"1775563900728-j5dy8m","createdAt":"2026-04-07T12:11:40.728Z","type":"task_created","taskId":"0337a016-2946-44fb-b3d4-19779d26d1a1","projectId":null,"goalId":null,"payload":{"priority":"medium","effort":"medium","durationMins":40,"dueDate":null}}
+{"id":"1775563900729-re442v","createdAt":"2026-04-07T12:11:40.729Z","type":"task_created","taskId":"6f5dd1dd-dd6f-441d-9e2d-ea4892597bb2","projectId":null,"goalId":null,"payload":{"priority":"medium","effort":"low","durationMins":20,"dueDate":null}}
+{"id":"1775563900730-ta823y","createdAt":"2026-04-07T12:11:40.730Z","type":"task_created","taskId":"b14e8f28-f6a8-49c8-8a4c-58ee49f9fe4d","projectId":null,"goalId":null,"payload":{"priority":"high","effort":"medium","durationMins":45,"dueDate":null}}
+{"id":"1775563900731-ghsjg0","createdAt":"2026-04-07T12:11:40.731Z","type":"generation_feedback","outputKind":"task","kind":"accepted","source":"assistant_execute_todo"}
+{"id":"1775563900734-yka4gp","createdAt":"2026-04-07T12:11:40.734Z","type":"chat_message","text":"Can you map out a launch plan for my app?"}
+{"id":"1775563900736-c4hazf","createdAt":"2026-04-07T12:11:40.736Z","type":"chat_route_selected","provider":"ollama","intent":"build_document","confidence":0.93,"text":"Can you map out a launch plan for my app?"}
+{"id":"1775563900737-nq8lvh","createdAt":"2026-04-07T12:11:40.737Z","type":"chat_style_signal","style":"detailed","outputKind":"doc"}
+{"id":"1775563900738-vtxuh4","createdAt":"2026-04-07T12:11:40.738Z","type":"generation_feedback","outputKind":"doc","kind":"accepted","source":"assistant_execute_document"}
+{"id":"1775563900741-sr62n2","createdAt":"2026-04-07T12:11:40.741Z","type":"chat_message","text":"I want to launch my app in 20 days."}
+{"id":"1775563900742-htfk9g","createdAt":"2026-04-07T12:11:40.742Z","type":"chat_route_selected","provider":"ollama","intent":"create_goal","confidence":0.91,"text":"I want to launch my app in 20 days."}
+{"id":"1775563900743-gkhsv9","createdAt":"2026-04-07T12:11:40.743Z","type":"chat_style_signal","style":"detailed","outputKind":"plan"}
+{"id":"1775709244157-6bp3sv","createdAt":"2026-04-09T04:34:04.157Z","type":"chat_message","text":"build launch plan doc"}
+{"id":"1775709244160-i1ldha","createdAt":"2026-04-09T04:34:04.160Z","type":"chat_style_signal","style":"detailed","outputKind":"doc"}
+{"id":"1775709244164-i77j69","createdAt":"2026-04-09T04:34:04.164Z","type":"generation_feedback","outputKind":"doc","kind":"accepted","source":"assistant_execute_document"}
+{"id":"1775709244172-ejw89t","createdAt":"2026-04-09T04:34:04.172Z","type":"chat_message","text":"build to do list for app launch"}
+{"id":"1775709244176-mwe83f","createdAt":"2026-04-09T04:34:04.176Z","type":"chat_style_signal","style":"detailed","outputKind":"plan"}
+{"id":"1775709244179-5uq8m2","createdAt":"2026-04-09T04:34:04.179Z","type":"task_created","taskId":"89289eda-bfbf-4c5a-bced-cb5946360d44","projectId":null,"goalId":null,"payload":{"priority":"high","effort":"high","durationMins":50,"dueDate":null}}
+{"id":"1775709244181-2tfg6p","createdAt":"2026-04-09T04:34:04.181Z","type":"task_created","taskId":"f1aae7c2-c0ac-4e23-a3f5-4d41f6c5bcb7","projectId":null,"goalId":null,"payload":{"priority":"high","effort":"high","durationMins":90,"dueDate":null}}
+{"id":"1775709244182-ejm290","createdAt":"2026-04-09T04:34:04.182Z","type":"task_created","taskId":"546a2dea-e47c-4061-a044-b50bac5e2616","projectId":null,"goalId":null,"payload":{"priority":"medium","effort":"medium","durationMins":40,"dueDate":null}}
+{"id":"1775709244185-vluhxs","createdAt":"2026-04-09T04:34:04.185Z","type":"task_created","taskId":"cd24b526-21b5-48bf-95c2-e1bdc950ed19","projectId":null,"goalId":null,"payload":{"priority":"medium","effort":"low","durationMins":20,"dueDate":null}}
+{"id":"1775709244187-cx6oqw","createdAt":"2026-04-09T04:34:04.187Z","type":"task_created","taskId":"cff1606d-05fa-415d-bee1-abc605f101c5","projectId":null,"goalId":null,"payload":{"priority":"high","effort":"medium","durationMins":45,"dueDate":null}}
+{"id":"1775709244189-2npims","createdAt":"2026-04-09T04:34:04.189Z","type":"generation_feedback","outputKind":"task","kind":"accepted","source":"assistant_execute_todo"}
+{"id":"1775709244197-oxa5z6","createdAt":"2026-04-09T04:34:04.197Z","type":"chat_message","text":"Can you map out a launch plan for my app?"}
+{"id":"1775709244200-bomyn9","createdAt":"2026-04-09T04:34:04.200Z","type":"chat_route_selected","provider":"ollama","intent":"build_document","confidence":0.93,"text":"Can you map out a launch plan for my app?"}
+{"id":"1775709244202-onc4b0","createdAt":"2026-04-09T04:34:04.202Z","type":"chat_style_signal","style":"detailed","outputKind":"doc"}
+{"id":"1775709244204-uhe4pv","createdAt":"2026-04-09T04:34:04.204Z","type":"generation_feedback","outputKind":"doc","kind":"accepted","source":"assistant_execute_document"}
+{"id":"1775709244211-9v9dqe","createdAt":"2026-04-09T04:34:04.211Z","type":"chat_message","text":"I want to launch my app in 20 days."}
+{"id":"1775709244213-hu0itq","createdAt":"2026-04-09T04:34:04.213Z","type":"chat_route_selected","provider":"ollama","intent":"create_goal","confidence":0.91,"text":"I want to launch my app in 20 days."}
+{"id":"1775709244214-aiq12u","createdAt":"2026-04-09T04:34:04.214Z","type":"chat_style_signal","style":"detailed","outputKind":"plan"}
+{"id":"1775711360442-86glpi","createdAt":"2026-04-09T05:09:20.442Z","type":"chat_message","text":"build launch plan doc"}
+{"id":"1775711360446-at932w","createdAt":"2026-04-09T05:09:20.446Z","type":"chat_style_signal","style":"detailed","outputKind":"doc"}
+{"id":"1775711360449-evh253","createdAt":"2026-04-09T05:09:20.449Z","type":"generation_feedback","outputKind":"doc","kind":"accepted","source":"assistant_execute_document"}
+{"id":"1775711360456-36uzqh","createdAt":"2026-04-09T05:09:20.456Z","type":"chat_message","text":"build to do list for app launch"}
+{"id":"1775711360459-i37ywp","createdAt":"2026-04-09T05:09:20.459Z","type":"chat_style_signal","style":"detailed","outputKind":"plan"}
+{"id":"1775711360463-ovqukf","createdAt":"2026-04-09T05:09:20.463Z","type":"task_created","taskId":"308f8b85-a3c4-4b51-9372-0c8d9f4d3270","projectId":null,"goalId":null,"payload":{"priority":"high","effort":"high","durationMins":50,"dueDate":null}}
+{"id":"1775711360464-a49ick","createdAt":"2026-04-09T05:09:20.464Z","type":"task_created","taskId":"fce36fa0-376a-47f1-a1a5-04e3dd1971bb","projectId":null,"goalId":null,"payload":{"priority":"high","effort":"high","durationMins":90,"dueDate":null}}
+{"id":"1775711360466-9ncuvr","createdAt":"2026-04-09T05:09:20.466Z","type":"task_created","taskId":"0cadf53a-9462-4dc6-850a-6bc231484aa3","projectId":null,"goalId":null,"payload":{"priority":"medium","effort":"medium","durationMins":40,"dueDate":null}}
+{"id":"1775711360468-vdtyh9","createdAt":"2026-04-09T05:09:20.468Z","type":"task_created","taskId":"cd15b45e-1340-4e6a-8ff0-4d79eb77dc9c","projectId":null,"goalId":null,"payload":{"priority":"medium","effort":"low","durationMins":20,"dueDate":null}}
+{"id":"1775711360470-6xdl97","createdAt":"2026-04-09T05:09:20.470Z","type":"task_created","taskId":"a5fe22aa-4884-4d00-9dac-8483240bd38a","projectId":null,"goalId":null,"payload":{"priority":"high","effort":"medium","durationMins":45,"dueDate":null}}
+{"id":"1775711360472-v1kpfi","createdAt":"2026-04-09T05:09:20.472Z","type":"generation_feedback","outputKind":"task","kind":"accepted","source":"assistant_execute_todo"}
+{"id":"1775711360480-rnd2ze","createdAt":"2026-04-09T05:09:20.480Z","type":"chat_message","text":"Can you map out a launch plan for my app?"}
+{"id":"1775711360483-2qnd7g","createdAt":"2026-04-09T05:09:20.483Z","type":"chat_route_selected","provider":"ollama","intent":"build_document","confidence":0.93,"text":"Can you map out a launch plan for my app?"}
+{"id":"1775711360485-h5aquw","createdAt":"2026-04-09T05:09:20.485Z","type":"chat_style_signal","style":"detailed","outputKind":"doc"}
+{"id":"1775711360488-fneqk0","createdAt":"2026-04-09T05:09:20.488Z","type":"generation_feedback","outputKind":"doc","kind":"accepted","source":"assistant_execute_document"}
+{"id":"1775711360495-cpmmse","createdAt":"2026-04-09T05:09:20.495Z","type":"chat_message","text":"I want to launch my app in 20 days."}
+{"id":"1775711360497-88oxhu","createdAt":"2026-04-09T05:09:20.497Z","type":"chat_route_selected","provider":"ollama","intent":"create_goal","confidence":0.91,"text":"I want to launch my app in 20 days."}
+{"id":"1775711360499-bex9hx","createdAt":"2026-04-09T05:09:20.499Z","type":"chat_style_signal","style":"detailed","outputKind":"plan"}
+{"id":"1775711962175-wmu4ev","createdAt":"2026-04-09T05:19:22.175Z","type":"chat_message","text":"build launch plan doc"}
+{"id":"1775711962178-9jrmmz","createdAt":"2026-04-09T05:19:22.178Z","type":"chat_style_signal","style":"detailed","outputKind":"doc"}
+{"id":"1775711962182-rnikns","createdAt":"2026-04-09T05:19:22.182Z","type":"generation_feedback","outputKind":"doc","kind":"accepted","source":"assistant_execute_document"}
+{"id":"1775711962189-sh656j","createdAt":"2026-04-09T05:19:22.189Z","type":"chat_message","text":"build to do list for app launch"}
+{"id":"1775711962191-c5lxxo","createdAt":"2026-04-09T05:19:22.192Z","type":"chat_style_signal","style":"detailed","outputKind":"plan"}
+{"id":"1775711962195-87qymu","createdAt":"2026-04-09T05:19:22.195Z","type":"task_created","taskId":"113c2577-288e-40e3-8139-8721b89fce72","projectId":null,"goalId":null,"payload":{"priority":"high","effort":"high","durationMins":50,"dueDate":null}}
+{"id":"1775711962197-bmoyv5","createdAt":"2026-04-09T05:19:22.197Z","type":"task_created","taskId":"30ccdfe0-2785-46b2-8d23-b3b67370a561","projectId":null,"goalId":null,"payload":{"priority":"high","effort":"high","durationMins":90,"dueDate":null}}
+{"id":"1775711962199-n42j7y","createdAt":"2026-04-09T05:19:22.199Z","type":"task_created","taskId":"541c2a1e-24f0-4f4a-bd44-7680882944ad","projectId":null,"goalId":null,"payload":{"priority":"medium","effort":"medium","durationMins":40,"dueDate":null}}
+{"id":"1775711962200-y52lru","createdAt":"2026-04-09T05:19:22.200Z","type":"task_created","taskId":"255b02cc-42b0-48d4-ad16-d0f589d7da5d","projectId":null,"goalId":null,"payload":{"priority":"medium","effort":"low","durationMins":20,"dueDate":null}}
+{"id":"1775711962202-tem0pi","createdAt":"2026-04-09T05:19:22.202Z","type":"task_created","taskId":"e8103e28-74aa-48ca-bbb7-d2b2594baa44","projectId":null,"goalId":null,"payload":{"priority":"high","effort":"medium","durationMins":45,"dueDate":null}}
+{"id":"1775711962204-2yjjkv","createdAt":"2026-04-09T05:19:22.204Z","type":"generation_feedback","outputKind":"task","kind":"accepted","source":"assistant_execute_todo"}
+{"id":"1775711962211-a0phk5","createdAt":"2026-04-09T05:19:22.211Z","type":"chat_message","text":"Can you map out a launch plan for my app?"}
+{"id":"1775711962214-08tajr","createdAt":"2026-04-09T05:19:22.214Z","type":"chat_route_selected","provider":"ollama","intent":"build_document","confidence":0.93,"text":"Can you map out a launch plan for my app?"}
+{"id":"1775711962216-kyf1ip","createdAt":"2026-04-09T05:19:22.216Z","type":"chat_style_signal","style":"detailed","outputKind":"doc"}
+{"id":"1775711962218-y79to1","createdAt":"2026-04-09T05:19:22.218Z","type":"generation_feedback","outputKind":"doc","kind":"accepted","source":"assistant_execute_document"}
+{"id":"1775711962224-pqixox","createdAt":"2026-04-09T05:19:22.224Z","type":"chat_message","text":"I want to launch my app in 20 days."}
+{"id":"1775711962226-e20i33","createdAt":"2026-04-09T05:19:22.226Z","type":"chat_route_selected","provider":"ollama","intent":"create_goal","confidence":0.91,"text":"I want to launch my app in 20 days."}
+{"id":"1775711962228-sdbgwv","createdAt":"2026-04-09T05:19:22.228Z","type":"chat_style_signal","style":"detailed","outputKind":"plan"}

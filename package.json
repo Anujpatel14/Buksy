@@ -1,0 +1,19 @@
+{
+  "name": "buksy",
+  "version": "1.0.0",
+  "description": "Buksy is a local everyday buddy bot that manages tasks, suggests next steps, and learns from feedback.",
+  "private": true,
+  "type": "commonjs",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.5",
+    "mysql2": "^3.11.5"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test --test-isolation=none --test-concurrency=1"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
