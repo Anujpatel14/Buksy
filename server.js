@@ -13,6 +13,7 @@ const {
   addProject,
   addKnowledgeItem,
   addWorkflow,
+  updateWorkflow,
   addCheckin,
   addFeedback,
   addActivity,
@@ -20,6 +21,13 @@ const {
   markSuggested,
   updateAiSettings,
   updateIntegrations,
+  updatePlugins,
+  updateWorldContext,
+  updatePrivacySettings,
+  updateAutopilotSettings,
+  addTeamMember,
+  addExecutionRequest,
+  updateExecutionRequest,
   updateProductivityHistory
 } = require("./src/store");
 const { isMysqlConfigured, initSchema, saveUserStateJson } = require("./src/db");
@@ -42,6 +50,11 @@ const {
   summarizeLearning
 } = require("./src/engine");
 const { buildAdvancedInsights } = require("./src/intelligence");
+const {
+  buildLifeAnalytics,
+  explainDelay,
+  simulateTimeline
+} = require("./src/analytics");
 const {
   buildGoalBlueprint,
   buildNegotiationAssist,
@@ -72,6 +85,19 @@ const {
   buildSurpriseInsights,
   buildHiddenInsights
 } = require("./src/workbench");
+const {
+  buildPluginCatalog,
+  buildExecutionPlan,
+  buildAutomationRule,
+  evaluateAutomationRules,
+  executePlannedAction
+} = require("./src/autonomy");
+const {
+  buildExtendedIntelligence,
+  simulateTwinResponse,
+  runLifeAutopilot,
+  buildAutonomousGoalPlan
+} = require("./src/meta");
 const { handleChat, buildRuntimeContext } = require("./src/assistant");
 const { getOllamaStatus } = require("./src/ollama");
 const {
@@ -203,6 +229,12 @@ async function buildDashboard(state) {
   );
   const mlScoreByTask = Object.fromEntries(mlEntries);
   const advanced = buildAdvancedInsights(state, context);
+  const analytics = buildLifeAnalytics(state, context);
+  const meta = buildExtendedIntelligence(state, {
+    ...context,
+    mlScoreByTask,
+    suggestionStyle: advanced.behaviorModel.suggestionStyle
+  });
   const suggestion = suggestNextTask(state, {
     ...context,
     mlScoreByTask,
@@ -226,6 +258,13 @@ async function buildDashboard(state) {
     learningInsights: summarizeLearning(state.profile),
     latestArtifacts: getLatestArtifacts(state),
     workspace: buildWorkspaceInsights(state),
+    analytics,
+    meta,
+    autonomy: {
+      plugins: buildPluginCatalog(state),
+      automationSuggestions: evaluateAutomationRules(state, context),
+      executions: (state.executions || []).slice(0, 10)
+    },
     stats: {
       openTasks: state.tasks.filter((task) => task.status === "open").length,
       completedTasks: state.tasks.filter((task) => task.status === "completed").length,
@@ -233,6 +272,7 @@ async function buildDashboard(state) {
       projectCount: state.projects.length,
       knowledgeCount: state.knowledge.length,
       workflowCount: state.workflows.length,
+      teamCount: (state.team || []).length,
       helpfulSignals:
         state.profile.learning.responsePatterns.helpful +
         state.profile.learning.responsePatterns.completed,
@@ -314,6 +354,32 @@ async function storeArtifact(kind, title, payload, projectId = null, category = 
     projectId,
     category
   });
+}
+
+function findExecution(state, id) {
+  return (state.executions || []).find((entry) => entry.id === id) || null;
+}
+
+async function createTasksFromBlueprint(items = [], projectId = null, source = "") {
+  const createdTasks = [];
+
+  for (const item of items) {
+    createdTasks.push(
+      await addTask({
+        title: item.title,
+        category: item.category,
+        priority: item.priority,
+        effort: item.effort,
+        durationMins: item.durationMins,
+        notes: item.notes,
+        projectId,
+        source,
+        externalId: item.externalId || ""
+      })
+    );
+  }
+
+  return createdTasks;
 }
 
 const PUBLIC_API_PATHS = new Set([
@@ -657,10 +723,58 @@ async function handleApi(req, res, url) {
       return;
     }
 
+    if (req.method === "POST" && pathname === "/api/goals/autoplan") {
+      const body = await readBody(req);
+      const state = await readState();
+      const { context } = await resolveCalendarAndContext(state);
+      const result = buildAutonomousGoalPlan(state, body, context);
+      const created = await addGoal({
+        ...body,
+        ...result.blueprint
+      });
+      const artifact = await storeArtifact(
+        "autonomous-goal-plan",
+        result.title || "Autonomous goal plan",
+        {
+          ...result,
+          goalId: created.goal.id,
+          taskIds: (created.tasks || []).map((task) => task.id)
+        },
+        body.projectId || null,
+        "planning"
+      );
+      sendJson(res, 201, {
+        result,
+        goal: created.goal,
+        tasks: created.tasks,
+        artifact
+      });
+      return;
+    }
+
     if (req.method === "POST" && pathname === "/api/checkins") {
       const body = await readBody(req);
       const checkin = await addCheckin(body);
-      sendJson(res, 201, { checkin });
+      let autopilot = null;
+      const state = await readState();
+      if (state.profile?.autopilot?.enabled) {
+        const { context } = await resolveCalendarAndContext(state);
+        const plan = runLifeAutopilot(state, context);
+        autopilot = { ...plan, adjustedTasks: [], createdExecutions: [] };
+
+        for (const deferment of plan.deferments || []) {
+          autopilot.adjustedTasks.push(
+            await updateTask(deferment.taskId, {
+              deferUntil: deferment.deferUntil
+            })
+          );
+        }
+
+        for (const execution of plan.plannedExecutions || []) {
+          autopilot.createdExecutions.push(await addExecutionRequest(execution));
+        }
+      }
+      sendJson(res, 201, { checkin, autopilot });
       return;
     }
 
@@ -743,6 +857,434 @@ async function handleApi(req, res, url) {
       const settings = await updateAiSettings(body);
       const status = await getOllamaStatus(settings);
       sendJson(res, 200, { settings, status });
+      return;
+    }
+
+    if (req.method === "GET" && pathname === "/api/analytics") {
+      const state = await readState();
+      const { context } = await resolveCalendarAndContext(state);
+      sendJson(res, 200, { analytics: buildLifeAnalytics(state, context) });
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/analytics/explain-delay") {
+      const body = await readBody(req);
+      const state = await readState();
+      const { context } = await resolveCalendarAndContext(state);
+      sendJson(res, 200, { analysis: explainDelay(state, body, context) });
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/time/simulate") {
+      const body = await readBody(req);
+      const state = await readState();
+      const { context } = await resolveCalendarAndContext(state);
+      const result = simulateTimeline(state, body, context);
+      const artifact = await storeArtifact("time-simulation", result.scope || "Time simulation", result, body.projectId || null, "planning");
+      sendJson(res, 200, { result, artifact });
+      return;
+    }
+
+    if (req.method === "GET" && pathname === "/api/meta") {
+      const state = await readState();
+      const { context } = await resolveCalendarAndContext(state);
+      sendJson(res, 200, { meta: buildExtendedIntelligence(state, context) });
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/twin/simulate") {
+      const body = await readBody(req);
+      const state = await readState();
+      const { context } = await resolveCalendarAndContext(state);
+      const result = simulateTwinResponse(state, body, context);
+      const artifact = await storeArtifact("digital-twin-simulation", body.prompt || "Digital twin simulation", result, body.projectId || null, "analysis");
+      sendJson(res, 200, { result, artifact });
+      return;
+    }
+
+    if (req.method === "GET" && pathname === "/api/world-context") {
+      const state = await readState();
+      const { context } = await resolveCalendarAndContext(state);
+      sendJson(res, 200, {
+        worldContext: state.profile?.worldContext || {},
+        contextEngine: buildExtendedIntelligence(state, context).contextEngine
+      });
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/world-context") {
+      const body = await readBody(req);
+      const worldContext = await updateWorldContext(body);
+      const state = await readState();
+      const { context } = await resolveCalendarAndContext(state);
+      sendJson(res, 200, {
+        worldContext,
+        contextEngine: buildExtendedIntelligence(state, context).contextEngine
+      });
+      return;
+    }
+
+    if (req.method === "GET" && pathname === "/api/team") {
+      const state = await readState();
+      const { context } = await resolveCalendarAndContext(state);
+      sendJson(res, 200, {
+        team: state.team || [],
+        teamBrain: buildExtendedIntelligence(state, context).teamBrain
+      });
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/team/members") {
+      const body = await readBody(req);
+      const member = await addTeamMember(body);
+      const state = await readState();
+      const { context } = await resolveCalendarAndContext(state);
+      sendJson(res, 201, {
+        member,
+        teamBrain: buildExtendedIntelligence(state, context).teamBrain
+      });
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/privacy/settings") {
+      const body = await readBody(req);
+      const privacy = await updatePrivacySettings(body);
+      const state = await readState();
+      const meta = buildExtendedIntelligence(state, buildRuntimeContext(state));
+      sendJson(res, 200, { privacy, privacyMode: meta.privacyMode });
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/autopilot/settings") {
+      const body = await readBody(req);
+      const settings = await updateAutopilotSettings(body);
+      const state = await readState();
+      const { context } = await resolveCalendarAndContext(state);
+      sendJson(res, 200, {
+        settings,
+        autopilot: buildExtendedIntelligence(state, context).autopilot
+      });
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/autopilot/run") {
+      const body = await readBody(req);
+      if (Object.keys(body || {}).length) {
+        await updateAutopilotSettings(body);
+      }
+      const state = await readState();
+      const { context } = await resolveCalendarAndContext(state);
+      const result = runLifeAutopilot(state, context);
+      const adjustedTasks = [];
+      const createdExecutions = [];
+
+      for (const deferment of result.deferments || []) {
+        adjustedTasks.push(
+          await updateTask(deferment.taskId, {
+            deferUntil: deferment.deferUntil
+          })
+        );
+      }
+
+      for (const execution of result.plannedExecutions || []) {
+        createdExecutions.push(await addExecutionRequest(execution));
+      }
+
+      const artifact = await storeArtifact(
+        "autopilot-run",
+        "Life autopilot run",
+        {
+          ...result,
+          adjustedTaskIds: adjustedTasks.map((task) => task.id),
+          executionIds: createdExecutions.map((execution) => execution.id)
+        },
+        body.projectId || null,
+        "automation"
+      );
+
+      sendJson(res, 200, { result, adjustedTasks, createdExecutions, artifact });
+      return;
+    }
+
+    if (req.method === "GET" && pathname === "/api/plugins") {
+      const state = await readState();
+      sendJson(res, 200, {
+        plugins: buildPluginCatalog(state),
+        config: state.profile?.plugins || {}
+      });
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/plugins") {
+      const body = await readBody(req);
+      const config = await updatePlugins(body);
+      const state = await readState();
+      sendJson(res, 200, {
+        config,
+        plugins: buildPluginCatalog(state)
+      });
+      return;
+    }
+
+    if (req.method === "GET" && pathname === "/api/executions") {
+      const state = await readState();
+      sendJson(res, 200, { executions: state.executions || [] });
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/actions/plan") {
+      const body = await readBody(req);
+      const state = await readState();
+      const plan = buildExecutionPlan(body, state);
+      const execution = await addExecutionRequest(plan);
+      sendJson(res, 201, { execution });
+      return;
+    }
+
+    if (req.method === "POST" && pathname.startsWith("/api/executions/") && pathname.endsWith("/approve")) {
+      const executionId = pathname.replace("/api/executions/", "").replace("/approve", "");
+      const execution = await updateExecutionRequest(executionId, { status: "approved" });
+      sendJson(res, 200, { execution });
+      return;
+    }
+
+    if (req.method === "POST" && pathname.startsWith("/api/executions/") && pathname.endsWith("/cancel")) {
+      const executionId = pathname.replace("/api/executions/", "").replace("/cancel", "");
+      const execution = await updateExecutionRequest(executionId, { status: "cancelled" });
+      sendJson(res, 200, { execution });
+      return;
+    }
+
+    if (req.method === "POST" && pathname.startsWith("/api/executions/") && pathname.endsWith("/run")) {
+      const executionId = pathname.replace("/api/executions/", "").replace("/run", "");
+      const state = await readState();
+      const execution = findExecution(state, executionId);
+
+      if (!execution) {
+        sendJson(res, 404, { error: "Execution request not found" });
+        return;
+      }
+
+      const { context } = await resolveCalendarAndContext(state);
+      const result = executePlannedAction(execution, state, context);
+      let artifact = null;
+      let createdTasks = [];
+
+      if (result.artifact) {
+        artifact = await storeArtifact(
+          result.artifact.kind,
+          result.artifact.title,
+          result.artifact.payload,
+          result.artifact.projectId || null,
+          result.artifact.category || "operations"
+        );
+      }
+
+      if (Array.isArray(result.createdTasks) && result.createdTasks.length) {
+        createdTasks = await createTasksFromBlueprint(result.createdTasks, null, execution.pluginId || "autonomy");
+      }
+
+      const updated = await updateExecutionRequest(executionId, {
+        status: "completed",
+        completedAt: new Date().toISOString(),
+        result: {
+          summary: result.summary,
+          artifactId: artifact?.id || "",
+          createdTaskCount: createdTasks.length
+        }
+      });
+
+      sendJson(res, 200, { execution: updated, artifact, createdTasks, result });
+      return;
+    }
+
+    if (req.method === "GET" && pathname === "/api/automations") {
+      const state = await readState();
+      const { context } = await resolveCalendarAndContext(state);
+      const workflows = (state.workflows || []).filter((workflow) =>
+        workflow.type === "automation" || ["task_overdue", "low_energy", "developer_pr"].includes(String(workflow.trigger || "").trim().toLowerCase())
+      );
+      sendJson(res, 200, {
+        automations: workflows,
+        suggestions: evaluateAutomationRules(state, context)
+      });
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/automations/build") {
+      const body = await readBody(req);
+      const result = buildAutomationRule(body);
+      const workflow = await addWorkflow({
+        ...result,
+        projectId: body.projectId || null
+      });
+      sendJson(res, 201, { result, workflow });
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/automations/run") {
+      const body = await readBody(req);
+      const state = await readState();
+      const workflowFilter = body.workflowId
+        ? (workflow) => workflow.id === body.workflowId
+        : (workflow) => workflow.status === "active";
+      const workflows = (state.workflows || []).filter(workflowFilter).filter((workflow) =>
+        workflow.type === "automation" || ["task_overdue", "low_energy", "developer_pr"].includes(String(workflow.trigger || "").trim().toLowerCase())
+      );
+      const nowIso = new Date().toISOString();
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const deferDate = tomorrow.toISOString().slice(0, 10);
+      const latestCheckin = state.checkins?.[0];
+      let adjustedTasks = [];
+      let createdExecutions = [];
+
+      for (const workflow of workflows) {
+        const trigger = String(workflow.trigger || "").trim().toLowerCase();
+
+        if (trigger === "task_overdue") {
+          const overdueTasks = (state.tasks || []).filter((task) => task.status === "open" && task.dueDate && new Date(task.dueDate) < new Date(nowIso));
+          for (const task of overdueTasks.slice(0, 6)) {
+            const patch = { deferUntil: deferDate };
+            const actionText = (workflow.actions || workflow.steps || []).join(" ").toLowerCase();
+            if (actionText.includes("reduce priority") || actionText.includes("lower priority")) {
+              patch.priority = task.priority === "high" ? "medium" : "low";
+            }
+            adjustedTasks.push(await updateTask(task.id, patch));
+          }
+        }
+
+        if (trigger === "low_energy" && latestCheckin?.energy === "low") {
+          const highEffort = (state.tasks || []).filter((task) => task.status === "open" && task.effort === "high");
+          for (const task of highEffort.slice(0, 5)) {
+            adjustedTasks.push(await updateTask(task.id, { deferUntil: deferDate }));
+          }
+        }
+
+        if (trigger === "developer_pr" && state.profile?.integrations?.github?.token) {
+          createdExecutions.push(
+            await addExecutionRequest(
+              buildExecutionPlan(
+                { actionType: "github_sync", prompt: "Sync GitHub developer pressure into Buksy tasks" },
+                state
+              )
+            )
+          );
+        }
+
+        await updateWorkflow(workflow.id, {
+          lastRunAt: nowIso,
+          runCount: Number(workflow.runCount || 0) + 1
+        });
+      }
+
+      const artifact = await storeArtifact(
+        "automation-run",
+        "Automation run summary",
+        {
+          workflows: workflows.map((workflow) => workflow.title),
+          adjustedTasks: adjustedTasks.map((task) => task.title),
+          createdExecutions: createdExecutions.map((execution) => execution.title)
+        },
+        body.projectId || null,
+        "automation"
+      );
+      sendJson(res, 200, { adjustedTasks, createdExecutions, artifact });
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/voice/journal") {
+      const body = await readBody(req);
+      const transcript = String(body.transcript || body.text || "").trim();
+      const summary = buildMeetingAssist({ transcript });
+      const insights = buildHiddenInsights({ text: transcript }, await readState());
+      const payload = {
+        transcript,
+        summary: summary.summary,
+        decisions: summary.decisions,
+        tasks: summary.tasks,
+        followUpMessage: summary.followUpMessage,
+        insights
+      };
+      const artifact = await storeArtifact("voice-journal", body.title || "Voice journal", payload, body.projectId || null, "reflection");
+      let createdTasks = [];
+
+      if (body.createTasks) {
+        createdTasks = await createTasksFromBlueprint(
+          (summary.tasks || [])
+            .filter((line) => !/no explicit/i.test(line))
+            .map((line, index) => ({
+              title: line.replace(/^(action|follow up|next step)\s*[:\-]?\s*/i, "").trim() || `Voice task ${index + 1}`,
+              category: "planning",
+              priority: index === 0 ? "high" : "medium",
+              effort: "medium",
+              durationMins: 25,
+              notes: "Created from voice journal."
+            })),
+          body.projectId || null,
+          "voice-journal"
+        );
+      }
+
+      if (body.saveToKnowledge) {
+        await addKnowledgeItem({
+          title: body.title || "Voice journal note",
+          category: "reflection",
+          content: JSON.stringify(payload, null, 2),
+          sourceType: "voice",
+          projectId: body.projectId || null
+        });
+      }
+
+      sendJson(res, 200, { result: payload, artifact, createdTasks });
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/developer/github/import") {
+      const state = await readState();
+      const cfg = state.profile?.integrations?.github || {};
+
+      if (!cfg.token || !(cfg.repos || []).length) {
+        sendJson(res, 400, { error: "Connect GitHub and track at least one repo first." });
+        return;
+      }
+
+      const dashboard = await github.buildGitHubDashboard(cfg.token, cfg.repos || []);
+      const existing = new Set(
+        (state.tasks || [])
+          .filter((task) => task.source === "github" && task.externalId)
+          .map((task) => task.externalId)
+      );
+      const createdTasks = [];
+
+      for (const repo of dashboard.repos || []) {
+        for (const pr of repo.openPRs || []) {
+          const externalId = `github:pr:${repo.fullName}:${pr.number}`;
+          if (existing.has(externalId)) {
+            continue;
+          }
+          createdTasks.push(
+            await addTask({
+              title: `Review PR #${pr.number}: ${pr.title}`,
+              category: "work",
+              priority: pr.reviewStatus === "review_requested" ? "high" : "medium",
+              effort: "medium",
+              durationMins: 35,
+              notes: `Repo: ${repo.fullName}. Status: ${pr.reviewStatus}.`,
+              externalId,
+              source: "github"
+            })
+          );
+          existing.add(externalId);
+        }
+      }
+
+      const artifact = await storeArtifact("developer-sync", "GitHub task import", {
+        repos: (dashboard.repos || []).map((repo) => repo.fullName),
+        importedTasks: createdTasks.map((task) => task.title),
+        summary: dashboard.summary
+      }, null, "developer");
+      sendJson(res, 200, { imported: createdTasks.length, tasks: createdTasks, dashboard, artifact });
       return;
     }
 

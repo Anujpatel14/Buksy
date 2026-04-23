@@ -32,7 +32,7 @@
             </div>
           </div>
           <p class="sidebar-copy">
-            Plan, write, organize, remember, and figure out the next best move without the clutter.
+            Plan your day, build useful things, run actions, and let Buksy learn how you work.
           </p>
           <nav class="sidebar-nav">
             <button class="nav-link active" data-view-target="today">
@@ -42,6 +42,14 @@
             <button class="nav-link" data-view-target="schedule">
               <i class="ph ph-calendar-dots"></i>
               <span>Schedule</span>
+            </button>
+            <button class="nav-link" data-view-target="agent">
+              <i class="ph ph-lightning"></i>
+              <span>Operate</span>
+            </button>
+            <button class="nav-link" data-view-target="analytics">
+              <i class="ph ph-chart-line-up"></i>
+              <span>Insights</span>
             </button>
             <button class="nav-link" data-view-target="create">
               <i class="ph ph-magic-wand"></i>
@@ -112,7 +120,7 @@
       <main class="main">
         <header class="topbar">
           <div>
-            <p class="eyebrow topbar-eyebrow">One place for tasks, plans, docs, and memory</p>
+            <p id="pageSubtitle" class="eyebrow topbar-eyebrow">One place for tasks, plans, docs, and memory</p>
             <h2 id="pageTitle">Today</h2>
           </div>
           <div id="topMetrics" class="top-metrics"></div>
@@ -221,8 +229,16 @@
                   </select>
                 </label>
                 <label>
+                  People
+                  <input type="text" name="people" placeholder="Anuj, Kirtan" />
+                </label>
+                <label>
                   Category
                   <input type="text" name="category" placeholder="work, admin, learning..." />
+                </label>
+                <label>
+                  Depends on
+                  <input type="text" name="dependsOn" placeholder="Design signoff, client reply" />
                 </label>
                 <label>
                   Priority
@@ -515,6 +531,10 @@
                   Objective
                   <textarea name="objective" rows="4" placeholder="What does done look like?"></textarea>
                 </label>
+                <label>
+                  People
+                  <input type="text" name="people" placeholder="Anuj, Kirtan, client" />
+                </label>
                 <button class="primary-button" type="submit">
                   <i class="ph ph-map-trifold"></i> Build roadmap
                 </button>
@@ -628,6 +648,877 @@
                 </div>
               </div>
               <div id="scheduleAtRisk"></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="page" data-view="agent">
+          <div class="page-grid agent-grid">
+            <article class="panel wide-panel spotlight-panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Autonomous action center</p>
+                  <h3>Turn Buksy into a careful doer</h3>
+                </div>
+              </div>
+              <p class="note-copy">
+                Ask Buksy to plan a real action, preview it, then approve or cancel it. This keeps external or high-stakes work human-reviewed.
+              </p>
+              <form id="executionPlanForm" class="task-form">
+                <label>
+                  Project
+                  <select name="projectId" class="project-select">
+                    <option value="">No project</option>
+                  </select>
+                </label>
+                <label>
+                  Action type
+                  <select name="actionType">
+                    <option value="">Auto-detect</option>
+                    <option value="schedule_meeting">Schedule meeting</option>
+                    <option value="draft_follow_up_email">Follow-up email</option>
+                    <option value="invoice_pack">Invoice pack</option>
+                    <option value="build_document">Build document</option>
+                    <option value="build_todo">Build to-do list</option>
+                    <option value="github_sync">Developer sync</option>
+                  </select>
+                </label>
+                <label class="wide">
+                  Request
+                  <textarea name="prompt" rows="5" placeholder="Schedule a 30-minute product review next week, or send a warm follow-up email to the client."></textarea>
+                </label>
+                <button class="primary-button wide" type="submit">
+                  <i class="ph ph-lightning"></i> Plan action
+                </button>
+              </form>
+              <div class="divider"></div>
+              <div id="executionPlannerResult"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Execution queue</p>
+                  <h3>Approve, run, or cancel</h3>
+                </div>
+              </div>
+              <div id="executionQueue"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Voice journal</p>
+                  <h3>Talk, then turn it into action</h3>
+                </div>
+              </div>
+              <div class="action-row compact-row">
+                <button id="voiceStartBtn" class="soft-button" type="button">
+                  <i class="ph ph-microphone"></i> Start voice
+                </button>
+                <button id="voiceStopBtn" class="ghost-button" type="button">
+                  <i class="ph ph-stop"></i> Stop
+                </button>
+              </div>
+              <p id="voiceStatus" class="note-copy">Voice capture is ready when your browser supports it. You can also paste text manually.</p>
+              <form id="voiceJournalForm" class="stack-form">
+                <label>
+                  Project
+                  <select name="projectId" class="project-select">
+                    <option value="">No project</option>
+                  </select>
+                </label>
+                <label>
+                  Title
+                  <input type="text" name="title" placeholder="Morning brain dump" />
+                </label>
+                <label>
+                  Transcript
+                  <textarea id="voiceTranscript" name="transcript" rows="8" placeholder="Speak into Buksy or paste your voice note text here."></textarea>
+                </label>
+                <label>
+                  Create tasks
+                  <select name="createTasks">
+                    <option value="true">Yes</option>
+                    <option value="false" selected>No</option>
+                  </select>
+                </label>
+                <label>
+                  Save to memory
+                  <select name="saveToKnowledge">
+                    <option value="true" selected>Yes</option>
+                    <option value="false">No</option>
+                  </select>
+                </label>
+                <button class="primary-button" type="submit">
+                  <i class="ph ph-waveform"></i> Process journal
+                </button>
+              </form>
+              <div class="divider"></div>
+              <div id="voiceJournalResult"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Automation</p>
+                  <h3>Smart workflow rules</h3>
+                </div>
+              </div>
+              <form id="automationBuildForm" class="stack-form">
+                <label>
+                  Project
+                  <select name="projectId" class="project-select">
+                    <option value="">No project</option>
+                  </select>
+                </label>
+                <label>
+                  Rule name
+                  <input type="text" name="title" placeholder="Low energy recovery mode" />
+                </label>
+                <label>
+                  Trigger
+                  <select name="trigger">
+                    <option value="task_overdue">Task overdue</option>
+                    <option value="low_energy">Low energy check-in</option>
+                    <option value="developer_pr">Developer PR pressure</option>
+                  </select>
+                </label>
+                <label>
+                  Actions
+                  <textarea name="actions" rows="5" placeholder="defer deep tasks, surface 3 easy wins, keep only critical due work"></textarea>
+                </label>
+                <label>
+                  Start active
+                  <select name="enabled">
+                    <option value="true" selected>Yes</option>
+                    <option value="false">No, save draft</option>
+                  </select>
+                </label>
+                <button class="primary-button" type="submit">
+                  <i class="ph ph-gear-six"></i> Create automation
+                </button>
+              </form>
+              <div class="divider"></div>
+              <div id="automationBuildResult"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Automation radar</p>
+                  <h3>What Buksy would automate now</h3>
+                </div>
+                <button id="runAutomationsBtn" class="soft-button" type="button">
+                  <i class="ph ph-play"></i> Run active
+                </button>
+              </div>
+              <div id="automationSuggestions"></div>
+              <div class="divider"></div>
+              <div id="automationWorkflowList"></div>
+            </article>
+
+            <article class="panel wide-panel spotlight-panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Life Autopilot</p>
+                  <h3>Let Buksy rebalance life with guardrails</h3>
+                </div>
+                <button id="runAutopilotBtn" class="soft-button" type="button">
+                  <i class="ph ph-rocket-launch"></i> Run autopilot
+                </button>
+              </div>
+              <div class="two-up">
+                <div>
+                  <form id="autopilotSettingsForm" class="task-form">
+                    <label>
+                      Enabled
+                      <select name="enabled">
+                        <option value="false" selected>Preview only</option>
+                        <option value="true">Enabled</option>
+                      </select>
+                    </label>
+                    <label>
+                      Mode
+                      <select name="mode">
+                        <option value="balanced" selected>Balanced</option>
+                        <option value="aggressive">Aggressive</option>
+                        <option value="lazy">Lazy mode</option>
+                      </select>
+                    </label>
+                    <label>
+                      Approval mode
+                      <select name="approvalMode">
+                        <option value="smart" selected>Smart approvals</option>
+                        <option value="always">Always ask</option>
+                        <option value="minimal">Minimal asks</option>
+                      </select>
+                    </label>
+                    <label>
+                      Max deep tasks
+                      <input type="number" name="maxDailyDeepTasks" min="1" max="6" value="3" />
+                    </label>
+                    <button class="primary-button wide" type="submit">
+                      <i class="ph ph-sliders-horizontal"></i> Save autopilot settings
+                    </button>
+                  </form>
+                </div>
+                <div>
+                  <div id="autopilotResult"></div>
+                </div>
+              </div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Context engine</p>
+                  <h3>Bring in the outside world</h3>
+                </div>
+              </div>
+              <form id="worldContextForm" class="stack-form">
+                <label>
+                  Location
+                  <input type="text" name="locationLabel" placeholder="Bangalore" />
+                </label>
+                <label>
+                  Weather
+                  <input type="text" name="weather" placeholder="Rainy, hot, humid..." />
+                </label>
+                <label>
+                  News / market signal
+                  <input type="text" name="newsSignal" placeholder="Market crash, competitor launch, quiet day..." />
+                </label>
+                <label>
+                  Commute minutes
+                  <input type="number" name="commuteMinutes" min="0" step="5" value="0" />
+                </label>
+                <label>
+                  Sleep hours
+                  <input type="number" name="sleepHours" min="0" max="18" step="0.5" value="0" />
+                </label>
+                <label>
+                  Operating mode
+                  <select name="workMode">
+                    <option value="auto" selected>Auto</option>
+                    <option value="focus">Focus</option>
+                    <option value="recovery">Recovery</option>
+                    <option value="creative">Creative</option>
+                    <option value="execution">Execution</option>
+                  </select>
+                </label>
+                <button class="primary-button" type="submit">
+                  <i class="ph ph-globe-hemisphere-west"></i> Update context
+                </button>
+              </form>
+              <div class="divider"></div>
+              <div id="worldContextResult"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Autonomous goal planner</p>
+                  <h3>Let Buksy decompose the mission</h3>
+                </div>
+              </div>
+              <form id="goalAutoplanForm" class="stack-form">
+                <label>
+                  Project
+                  <select name="projectId" class="project-select">
+                    <option value="">No project</option>
+                  </select>
+                </label>
+                <label>
+                  Goal
+                  <input type="text" name="title" placeholder="Launch SaaS in 30 days" />
+                </label>
+                <label>
+                  Target days
+                  <input type="number" name="targetDays" min="3" max="180" value="30" />
+                </label>
+                <label>
+                  Objective
+                  <textarea name="objective" rows="5" placeholder="What outcome should exist when this is done?"></textarea>
+                </label>
+                <label>
+                  People
+                  <input type="text" name="people" placeholder="Founder, designer, client" />
+                </label>
+                <button class="primary-button" type="submit">
+                  <i class="ph ph-brain"></i> Build full AI plan
+                </button>
+              </form>
+              <div class="divider"></div>
+              <div id="goalAutoplanResult"></div>
+            </article>
+
+            <article class="panel wide-panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Team brain</p>
+                  <h3>See blockers between people, not just tasks</h3>
+                </div>
+              </div>
+              <div class="two-up">
+                <div>
+                  <form id="teamMemberForm" class="stack-form">
+                    <label>
+                      Name
+                      <input type="text" name="name" placeholder="Kirtan" />
+                    </label>
+                    <label>
+                      Role
+                      <input type="text" name="role" placeholder="Designer" />
+                    </label>
+                    <label>
+                      Focus area
+                      <input type="text" name="focusArea" placeholder="Design system, onboarding UX" />
+                    </label>
+                    <label>
+                      Availability
+                      <select name="availability">
+                        <option value="full" selected>Full</option>
+                        <option value="part-time">Part-time</option>
+                        <option value="limited">Limited</option>
+                      </select>
+                    </label>
+                    <button class="primary-button" type="submit">
+                      <i class="ph ph-user-plus"></i> Add teammate
+                    </button>
+                  </form>
+                </div>
+                <div>
+                  <div id="teamResult"></div>
+                </div>
+              </div>
+            </article>
+
+            <article class="panel wide-panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Thinking studio</p>
+                  <h3>Use planner, critic, optimizer, teacher, and builder modes</h3>
+                </div>
+              </div>
+              <div class="studio-grid">
+                <div class="mini-card">
+                  <p class="panel-kicker">Multi-agent</p>
+                  <form id="multiAgentForm" class="stack-form compact-form">
+                    <label>
+                      Prompt
+                      <textarea name="prompt" rows="4" placeholder="How should I launch Buksy as a premium product?"></textarea>
+                    </label>
+                    <button class="primary-button" type="submit">Run</button>
+                  </form>
+                  <div class="divider"></div>
+                  <div id="multiAgentResult"></div>
+                </div>
+                <div class="mini-card">
+                  <p class="panel-kicker">Role switcher</p>
+                  <form id="roleForm" class="stack-form compact-form">
+                    <label>
+                      Role
+                      <select name="role">
+                        <option value="strategist">Strategist</option>
+                        <option value="investor">Investor</option>
+                        <option value="developer">Developer</option>
+                        <option value="marketer">Marketer</option>
+                        <option value="recruiter">Recruiter</option>
+                        <option value="explainer">Explainer</option>
+                      </select>
+                    </label>
+                    <label>
+                      Prompt
+                      <textarea name="prompt" rows="4" placeholder="Review my product direction through this lens"></textarea>
+                    </label>
+                    <button class="primary-button" type="submit">Analyze</button>
+                  </form>
+                  <div class="divider"></div>
+                  <div id="roleResult"></div>
+                </div>
+                <div class="mini-card">
+                  <p class="panel-kicker">Scenario simulation</p>
+                  <form id="simulationForm" class="stack-form compact-form">
+                    <label>
+                      Scenario
+                      <input type="text" name="scenario" placeholder="Increase price by 20%" />
+                    </label>
+                    <label>
+                      Current value
+                      <input type="number" name="currentValue" min="1" value="100" />
+                    </label>
+                    <label>
+                      Change %
+                      <input type="number" name="changePercent" value="20" />
+                    </label>
+                    <button class="primary-button" type="submit">Simulate</button>
+                  </form>
+                  <div class="divider"></div>
+                  <div id="simulationResult"></div>
+                </div>
+                <div class="mini-card">
+                  <p class="panel-kicker">Action hub</p>
+                  <form id="actionHubForm" class="stack-form compact-form">
+                    <label>
+                      Pack type
+                      <select name="actionType">
+                        <option value="invoice_email">Invoice + email</option>
+                        <option value="document_outline">Document outline</option>
+                        <option value="meeting_followup">Meeting follow-up</option>
+                      </select>
+                    </label>
+                    <label>
+                      Prompt
+                      <textarea name="prompt" rows="4" placeholder="Create an invoice and send a calm follow-up"></textarea>
+                    </label>
+                    <button class="primary-button" type="submit">Build pack</button>
+                  </form>
+                  <div class="divider"></div>
+                  <div id="actionHubResult"></div>
+                </div>
+                <div class="mini-card">
+                  <p class="panel-kicker">Idea generator</p>
+                  <form id="ideasForm" class="stack-form compact-form">
+                    <label>
+                      Domain
+                      <input type="text" name="domain" placeholder="healthcare SaaS" />
+                    </label>
+                    <label>
+                      Count
+                      <input type="number" name="count" min="3" max="10" value="5" />
+                    </label>
+                    <button class="primary-button" type="submit">Generate</button>
+                  </form>
+                  <div class="divider"></div>
+                  <div id="ideasResult"></div>
+                </div>
+                <div class="mini-card">
+                  <p class="panel-kicker">Learning companion</p>
+                  <form id="learningForm" class="stack-form compact-form">
+                    <label>
+                      Topic
+                      <input type="text" name="topic" placeholder="Learn React architecture" />
+                    </label>
+                    <label>
+                      Level
+                      <select name="level">
+                        <option value="beginner">Beginner</option>
+                        <option value="intermediate" selected>Intermediate</option>
+                        <option value="advanced">Advanced</option>
+                      </select>
+                    </label>
+                    <button class="primary-button" type="submit">Teach me</button>
+                  </form>
+                  <div class="divider"></div>
+                  <div id="learningResult"></div>
+                </div>
+                <div class="mini-card">
+                  <p class="panel-kicker">Debate mode</p>
+                  <form id="debateForm" class="stack-form compact-form">
+                    <label>
+                      Topic
+                      <input type="text" name="topic" placeholder="Should I productize this service?" />
+                    </label>
+                    <button class="primary-button" type="submit">Debate</button>
+                  </form>
+                  <div class="divider"></div>
+                  <div id="debateResult"></div>
+                </div>
+                <div class="mini-card">
+                  <p class="panel-kicker">Comparison engine</p>
+                  <form id="compareForm" class="stack-form compact-form">
+                    <label>
+                      Option A
+                      <textarea name="optionA" rows="3" placeholder="Build feature A"></textarea>
+                    </label>
+                    <label>
+                      Option B
+                      <textarea name="optionB" rows="3" placeholder="Build feature B"></textarea>
+                    </label>
+                    <button class="primary-button" type="submit">Compare</button>
+                  </form>
+                  <div class="divider"></div>
+                  <div id="compareResult"></div>
+                </div>
+                <div class="mini-card">
+                  <p class="panel-kicker">Presentation builder</p>
+                  <form id="presentationForm" class="stack-form compact-form">
+                    <label>
+                      Topic
+                      <input type="text" name="topic" placeholder="Buksy premium pitch" />
+                    </label>
+                    <label>
+                      Audience
+                      <input type="text" name="audience" placeholder="Investors" />
+                    </label>
+                    <label>
+                      Minutes
+                      <input type="number" name="durationMins" min="5" max="60" value="15" />
+                    </label>
+                    <button class="primary-button" type="submit">Build outline</button>
+                  </form>
+                  <div class="divider"></div>
+                  <div id="presentationResult"></div>
+                </div>
+                <div class="mini-card">
+                  <p class="panel-kicker">Workflow builder</p>
+                  <form id="workflowForm" class="stack-form compact-form">
+                    <label>
+                      Title
+                      <input type="text" name="title" placeholder="Invoice intake workflow" />
+                    </label>
+                    <label>
+                      Trigger
+                      <input type="text" name="trigger" placeholder="When invoice arrives" />
+                    </label>
+                    <label>
+                      Actions
+                      <textarea name="actions" rows="4" placeholder="extract total, summarize invoice, save result, draft follow-up"></textarea>
+                    </label>
+                    <button class="primary-button" type="submit">Blueprint</button>
+                  </form>
+                  <div class="divider"></div>
+                  <div id="workflowResult"></div>
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="page" data-view="analytics">
+          <div class="page-grid analytics-grid">
+            <article class="panel wide-panel spotlight-panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Life analytics</p>
+                  <h3>See patterns, pressure, and likely outcomes</h3>
+                </div>
+              </div>
+              <p class="note-copy">
+                Buksy tracks work rhythm, overload, avoidance, learning signals, and future risk so it can guide the next move with more context.
+              </p>
+              <div id="analyticsSummary"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Weekly report</p>
+                  <h3>What your recent work says</h3>
+                </div>
+              </div>
+              <div id="analyticsWeeklyCard"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Performance windows</p>
+                  <h3>When you do your best work</h3>
+                </div>
+              </div>
+              <div id="analyticsPerformanceCard"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Burnout radar</p>
+                  <h3>Watch stress before it hits hard</h3>
+                </div>
+              </div>
+              <div id="analyticsBurnoutCard"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Goal odds</p>
+                  <h3>Success probability</h3>
+                </div>
+              </div>
+              <div id="analyticsGoalProbabilityCard"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Avoidance map</p>
+                  <h3>Where you keep stalling</h3>
+                </div>
+              </div>
+              <div id="analyticsAvoidanceCard"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Personalization engine</p>
+                  <h3>How Buksy is adapting</h3>
+                </div>
+              </div>
+              <div id="analyticsPersonalizationCard"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">AI credits</p>
+                  <h3>Usage and plan signals</h3>
+                </div>
+              </div>
+              <div id="analyticsUsageCard"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Digital twin</p>
+                  <h3>Your predictive self-model</h3>
+                </div>
+              </div>
+              <div id="digitalTwinCard"></div>
+              <div class="divider"></div>
+              <form id="digitalTwinSimulationForm" class="stack-form">
+                <label>
+                  Scenario
+                  <textarea name="prompt" rows="5" placeholder="Will I actually complete this plan if I try to launch next week?"></textarea>
+                </label>
+                <button class="primary-button" type="submit">
+                  <i class="ph ph-user-focus"></i> Simulate me
+                </button>
+              </form>
+              <div class="divider"></div>
+              <div id="digitalTwinSimulationResult"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Future roadmap</p>
+                  <h3>Multiple life paths in one view</h3>
+                </div>
+              </div>
+              <div id="futureTimelineCard"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Habit DNA</p>
+                  <h3>Root behavior patterns</h3>
+                </div>
+              </div>
+              <div id="habitDnaCard"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Emotional intelligence</p>
+                  <h3>Burnout and frustration cycles</h3>
+                </div>
+              </div>
+              <div id="emotionalIntelligenceCard"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Personal playbooks</p>
+                  <h3>What works for you repeatedly</h3>
+                </div>
+              </div>
+              <div id="playbooksCard"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">CEO mode</p>
+                  <h3>Strategic focus areas</h3>
+                </div>
+              </div>
+              <div id="strategyEngineCard"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Subconscious patterns</p>
+                  <h3>Signals you might miss yourself</h3>
+                </div>
+              </div>
+              <div id="subconsciousPatternsCard"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Gamified life</p>
+                  <h3>Progress, levels, and unlocks</h3>
+                </div>
+              </div>
+              <div id="gamificationCard"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Private AI mode</p>
+                  <h3>Local-first control</h3>
+                </div>
+              </div>
+              <div id="privacyModeCard"></div>
+              <div class="divider"></div>
+              <form id="privacySettingsForm" class="stack-form">
+                <label>
+                  Data sharing
+                  <select name="dataSharing">
+                    <option value="local_only" selected>Local only</option>
+                    <option value="connected_apps">Connected apps only</option>
+                    <option value="custom">Custom</option>
+                  </select>
+                </label>
+                <label>
+                  Local-first
+                  <select name="localFirst">
+                    <option value="true" selected>Yes</option>
+                    <option value="false">No</option>
+                  </select>
+                </label>
+                <label>
+                  Prefer offline
+                  <select name="offlinePreferred">
+                    <option value="true" selected>Yes</option>
+                    <option value="false">No</option>
+                  </select>
+                </label>
+                <button class="primary-button" type="submit">
+                  <i class="ph ph-lock"></i> Save privacy mode
+                </button>
+              </form>
+            </article>
+
+            <article class="panel wide-panel">
+              <div class="result-grid">
+                <div class="mini-card">
+                  <p class="panel-kicker">Team brain</p>
+                  <div id="teamBrainCard"></div>
+                </div>
+                <div class="mini-card">
+                  <p class="panel-kicker">Context engine</p>
+                  <div id="contextEngineCard"></div>
+                </div>
+                <div class="mini-card">
+                  <p class="panel-kicker">Meta learning</p>
+                  <div id="metaLearningCard"></div>
+                </div>
+                <div class="mini-card">
+                  <p class="panel-kicker">Autopilot readiness</p>
+                  <div id="autopilotAnalyticsCard"></div>
+                </div>
+              </div>
+            </article>
+
+            <article class="panel wide-panel">
+              <div class="two-up">
+                <div>
+                  <div class="panel-header">
+                    <div>
+                      <p class="panel-kicker">Time simulator</p>
+                      <h3>Model the finish line</h3>
+                    </div>
+                  </div>
+                  <form id="timeSimulationForm" class="stack-form">
+                    <label>
+                      Project
+                      <select name="projectId" class="project-select">
+                        <option value="">All open work</option>
+                      </select>
+                    </label>
+                    <label>
+                      Label
+                      <input type="text" name="label" placeholder="App launch sprint" />
+                    </label>
+                    <label>
+                      Daily hours
+                      <input type="number" name="dailyHours" min="1" max="12" step="0.5" value="2" />
+                    </label>
+                    <label>
+                      Target date
+                      <input type="date" name="targetDate" />
+                    </label>
+                    <label>
+                      Days off
+                      <input type="text" name="daysOff" placeholder="2026-04-25, 2026-04-28" />
+                    </label>
+                    <label>
+                      Include weekends
+                      <select name="includeWeekends">
+                        <option value="false" selected>No</option>
+                        <option value="true">Yes</option>
+                      </select>
+                    </label>
+                    <button class="primary-button" type="submit">
+                      <i class="ph ph-timer"></i> Run simulation
+                    </button>
+                  </form>
+                  <div class="divider"></div>
+                  <div id="timeSimulationResult"></div>
+                </div>
+                <div>
+                  <div class="panel-header">
+                    <div>
+                      <p class="panel-kicker">Delay diagnosis</p>
+                      <h3>Find what is really slowing you down</h3>
+                    </div>
+                  </div>
+                  <form id="delayExplainForm" class="stack-form">
+                    <label>
+                      Project, goal, or topic
+                      <input type="text" name="query" placeholder="Launch Buksy premium" />
+                    </label>
+                    <button class="primary-button" type="submit">
+                      <i class="ph ph-magnifying-glass-plus"></i> Explain delay
+                    </button>
+                  </form>
+                  <div class="divider"></div>
+                  <div id="delayExplainResult"></div>
+                </div>
+              </div>
+            </article>
+
+            <article class="panel wide-panel">
+              <div class="result-grid">
+                <div class="mini-card">
+                  <p class="panel-kicker">Predictive day</p>
+                  <div id="predictiveDayCard"></div>
+                </div>
+                <div class="mini-card">
+                  <p class="panel-kicker">Cognitive load</p>
+                  <div id="cognitiveLoadCard"></div>
+                </div>
+                <div class="mini-card">
+                  <p class="panel-kicker">Context switching</p>
+                  <div id="focusGuardCard"></div>
+                </div>
+                <div class="mini-card">
+                  <p class="panel-kicker">Delayed consequences</p>
+                  <div id="consequenceCard"></div>
+                </div>
+                <div class="mini-card">
+                  <p class="panel-kicker">Priority rebalancer</p>
+                  <div id="priorityRebalanceCard"></div>
+                </div>
+                <div class="mini-card">
+                  <p class="panel-kicker">Opportunity scanner</p>
+                  <div id="workspaceOpportunityCard"></div>
+                  <div class="divider"></div>
+                  <div id="workspaceSurpriseCard"></div>
+                </div>
+              </div>
             </article>
           </div>
         </section>
@@ -801,6 +1692,62 @@
                 Set <code>BUKSY_PUBLIC_URL</code> in <code>.env</code> to your public app URL (e.g. <code>https://your-domain.com</code>) so provider redirect URIs match.
               </p>
             </article>
+            <article class="panel wide-panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Plugin hub</p>
+                  <h3>Control the extensions behind Buksy</h3>
+                </div>
+              </div>
+              <div id="pluginCatalog"></div>
+              <div class="divider"></div>
+              <form id="pluginSettingsForm" class="task-form">
+                <label>
+                  Gmail mode
+                  <select name="gmailMode">
+                    <option value="draft_only">Draft only</option>
+                    <option value="send_with_confirmation">Send with confirmation</option>
+                  </select>
+                </label>
+                <label>
+                  Google Calendar write mode
+                  <select name="googleCalendarWritable">
+                    <option value="false" selected>Read only</option>
+                    <option value="true">Writable</option>
+                  </select>
+                </label>
+                <label>
+                  Slack plugin
+                  <select name="slackEnabled">
+                    <option value="false" selected>Off</option>
+                    <option value="true">On</option>
+                  </select>
+                </label>
+                <label>
+                  Stripe plugin
+                  <select name="stripeEnabled">
+                    <option value="false" selected>Off</option>
+                    <option value="true">On</option>
+                  </select>
+                </label>
+                <label>
+                  Webhook plugin
+                  <select name="webhookEnabled">
+                    <option value="false" selected>Off</option>
+                    <option value="true">On</option>
+                  </select>
+                </label>
+                <label class="wide">
+                  Webhook URL
+                  <input type="text" name="webhookUrl" placeholder="https://your-endpoint.example.com/hook" />
+                </label>
+                <button class="primary-button wide" type="submit">
+                  <i class="ph ph-plug"></i> Save plugin settings
+                </button>
+              </form>
+              <div class="divider"></div>
+              <div id="pluginSettingsResult"></div>
+            </article>
             <article class="panel">
               <div class="panel-header">
                 <div>
@@ -866,6 +1813,15 @@
               <button id="githubRefreshBtn" class="soft-button wide hidden" type="button">
                 <i class="ph ph-arrows-clockwise"></i> Refresh Stats
               </button>
+              <div class="divider"></div>
+              <div class="mini-card dense-card">
+                <p class="panel-kicker">Developer mode</p>
+                <p class="note-copy">Convert open PR pressure into Buksy tasks and schedule awareness.</p>
+                <button id="developerImportBtn" class="soft-button wide" type="button">
+                  <i class="ph ph-git-pull-request"></i> Import developer tasks
+                </button>
+                <div id="developerImportResult"></div>
+              </div>
             </article>
 
             <article class="panel">

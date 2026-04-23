@@ -16,6 +16,10 @@ const {
   createDefaultOllamaSettings,
   normalizeOllamaSettings
 } = require("./ollama");
+const {
+  createDefaultPlugins,
+  normalizePlugins
+} = require("./autonomy");
 const { getCurrentUserId } = require("./context");
 const {
   isMysqlConfigured,
@@ -78,11 +82,40 @@ function createDefaultIntegrations() {
   };
 }
 
+function createDefaultWorldContext() {
+  return {
+    locationLabel: "",
+    weather: "",
+    newsSignal: "",
+    commuteMinutes: 0,
+    sleepHours: 0,
+    workMode: "auto",
+    updatedAt: null
+  };
+}
+
+function createDefaultPrivacySettings() {
+  return {
+    localFirst: true,
+    offlinePreferred: true,
+    dataSharing: "local_only"
+  };
+}
+
+function createDefaultAutopilotSettings() {
+  return {
+    enabled: false,
+    mode: "balanced",
+    approvalMode: "smart",
+    maxDailyDeepTasks: 3
+  };
+}
+
 function createDefaultState() {
   const now = new Date().toISOString();
 
   return {
-    version: 5,
+    version: 7,
     knowledgeSeedVersion: 0,
     createdAt: now,
     updatedAt: now,
@@ -95,6 +128,10 @@ function createDefaultState() {
       ai: createDefaultOllamaSettings(),
       learning: createDefaultLearning(),
       integrations: createDefaultIntegrations(),
+      plugins: createDefaultPlugins(),
+      worldContext: createDefaultWorldContext(),
+      privacy: createDefaultPrivacySettings(),
+      autopilot: createDefaultAutopilotSettings(),
       productivityHistory: [],
       completionVelocity: { avgPerDay: 0, trend: "stable" },
       preferredWorkHours: { start: "09:00", end: "18:00", peakFocus: "morning" },
@@ -109,6 +146,8 @@ function createDefaultState() {
     feedback: [],
     activities: [],
     artifacts: [],
+    executions: [],
+    team: [],
     conversations: [
       {
         id: crypto.randomUUID(),
@@ -226,10 +265,16 @@ function normalizeWorkflow(workflow = {}) {
   return {
     id: workflow.id || crypto.randomUUID(),
     title: String(workflow.title || "").trim(),
+    description: String(workflow.description || "").trim(),
+    type: String(workflow.type || "workflow").trim(),
     trigger: String(workflow.trigger || "").trim(),
     steps: Array.isArray(workflow.steps) ? workflow.steps : [],
+    actions: Array.isArray(workflow.actions) ? workflow.actions : [],
+    safeguards: Array.isArray(workflow.safeguards) ? workflow.safeguards : [],
     status: String(workflow.status || "draft"),
     projectId: workflow.projectId || null,
+    lastRunAt: workflow.lastRunAt || null,
+    runCount: Number(workflow.runCount || 0),
     createdAt: workflow.createdAt || new Date().toISOString(),
     updatedAt: workflow.updatedAt || new Date().toISOString()
   };
@@ -260,6 +305,86 @@ function normalizeArtifact(artifact = {}) {
   };
 }
 
+function normalizeWorldContext(input = {}) {
+  return {
+    locationLabel: String(input.locationLabel || "").trim(),
+    weather: String(input.weather || "").trim(),
+    newsSignal: String(input.newsSignal || "").trim(),
+    commuteMinutes: Number.isFinite(Number(input.commuteMinutes)) ? Math.max(0, Math.round(Number(input.commuteMinutes))) : 0,
+    sleepHours: Number.isFinite(Number(input.sleepHours)) ? Math.max(0, Math.min(18, Number(input.sleepHours))) : 0,
+    workMode: ["auto", "focus", "recovery", "creative", "execution"].includes(String(input.workMode || "").trim().toLowerCase())
+      ? String(input.workMode || "").trim().toLowerCase()
+      : "auto",
+    updatedAt: input.updatedAt || null
+  };
+}
+
+function normalizePrivacySettings(input = {}) {
+  return {
+    localFirst: input.localFirst !== false,
+    offlinePreferred: input.offlinePreferred !== false,
+    dataSharing: ["local_only", "connected_apps", "custom"].includes(String(input.dataSharing || "").trim().toLowerCase())
+      ? String(input.dataSharing || "").trim().toLowerCase()
+      : "local_only"
+  };
+}
+
+function normalizeAutopilotSettings(input = {}) {
+  return {
+    enabled: input.enabled === true || input.enabled === "true",
+    mode: ["aggressive", "balanced", "lazy"].includes(String(input.mode || "").trim().toLowerCase())
+      ? String(input.mode || "").trim().toLowerCase()
+      : "balanced",
+    approvalMode: ["smart", "always", "minimal"].includes(String(input.approvalMode || "").trim().toLowerCase())
+      ? String(input.approvalMode || "").trim().toLowerCase()
+      : "smart",
+    maxDailyDeepTasks: Number.isFinite(Number(input.maxDailyDeepTasks))
+      ? Math.max(1, Math.min(6, Math.round(Number(input.maxDailyDeepTasks))))
+      : 3
+  };
+}
+
+function normalizeTeamMember(member = {}) {
+  return {
+    id: member.id || crypto.randomUUID(),
+    name: String(member.name || "").trim(),
+    role: String(member.role || "teammate").trim(),
+    focusArea: String(member.focusArea || "").trim(),
+    availability: ["full", "part-time", "limited"].includes(String(member.availability || "").trim().toLowerCase())
+      ? String(member.availability || "").trim().toLowerCase()
+      : "full",
+    timezone: String(member.timezone || "").trim(),
+    createdAt: member.createdAt || new Date().toISOString()
+  };
+}
+
+function normalizeExecution(execution = {}) {
+  const validStatuses = new Set([
+    "pending_confirmation",
+    "approved",
+    "completed",
+    "blocked",
+    "cancelled",
+    "failed"
+  ]);
+
+  return {
+    id: execution.id || crypto.randomUUID(),
+    title: String(execution.title || "").trim(),
+    actionType: String(execution.actionType || "general_assist").trim(),
+    pluginId: String(execution.pluginId || "local").trim(),
+    prompt: String(execution.prompt || "").trim(),
+    preview: execution.preview && typeof execution.preview === "object" ? execution.preview : {},
+    requiresConfirmation: execution.requiresConfirmation !== false,
+    status: validStatuses.has(execution.status) ? execution.status : "pending_confirmation",
+    result: execution.result && typeof execution.result === "object" ? execution.result : {},
+    error: execution.error ? String(execution.error) : "",
+    createdAt: execution.createdAt || new Date().toISOString(),
+    updatedAt: execution.updatedAt || new Date().toISOString(),
+    completedAt: execution.completedAt || null
+  };
+}
+
 function normalizeState(state) {
   const next = state || createDefaultState();
   const defaultLearning = createDefaultLearning();
@@ -272,6 +397,10 @@ function normalizeState(state) {
     ...createDefaultIntegrations(),
     ...(next.profile.integrations || {})
   };
+  next.profile.plugins = normalizePlugins(next.profile.plugins || {});
+  next.profile.worldContext = normalizeWorldContext(next.profile.worldContext || createDefaultWorldContext());
+  next.profile.privacy = normalizePrivacySettings(next.profile.privacy || createDefaultPrivacySettings());
+  next.profile.autopilot = normalizeAutopilotSettings(next.profile.autopilot || createDefaultAutopilotSettings());
   next.profile.productivityHistory = Array.isArray(next.profile.productivityHistory) ? next.profile.productivityHistory : [];
   next.profile.completionVelocity = next.profile.completionVelocity || { avgPerDay: 0, trend: "stable" };
   next.profile.preferredWorkHours = next.profile.preferredWorkHours || { start: "09:00", end: "18:00", peakFocus: "morning" };
@@ -324,6 +453,8 @@ function normalizeState(state) {
   next.feedback = Array.isArray(next.feedback) ? next.feedback : [];
   next.activities = Array.isArray(next.activities) ? next.activities.map(normalizeActivity) : [];
   next.artifacts = Array.isArray(next.artifacts) ? next.artifacts.map(normalizeArtifact) : [];
+  next.executions = Array.isArray(next.executions) ? next.executions.map(normalizeExecution) : [];
+  next.team = Array.isArray(next.team) ? next.team.map(normalizeTeamMember).filter((member) => member.name) : [];
   next.conversations = Array.isArray(next.conversations) ? next.conversations : [];
   next.knowledgeSeedVersion = next.knowledgeSeedVersion || 0;
 
@@ -505,10 +636,16 @@ function cleanWorkflowInput(input = {}) {
   return normalizeWorkflow({
     id: crypto.randomUUID(),
     title: String(input.title || "").trim(),
+    description: String(input.description || "").trim(),
+    type: input.type || "workflow",
     trigger: String(input.trigger || "").trim(),
     steps: input.steps,
+    actions: input.actions,
+    safeguards: input.safeguards,
     status: input.status || "draft",
     projectId: input.projectId || null,
+    lastRunAt: input.lastRunAt || null,
+    runCount: input.runCount || 0,
     createdAt: now,
     updatedAt: now
   });
@@ -550,6 +687,18 @@ function findProjectById(state, id) {
   return project;
 }
 
+function findExecutionById(state, id) {
+  const execution = state.executions.find((entry) => entry.id === id);
+
+  if (!execution) {
+    const error = new Error("Execution request not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  return execution;
+}
+
 function touchProject(state, projectId) {
   if (!projectId) {
     return;
@@ -585,6 +734,84 @@ function refreshGoalProgress(state, goalId) {
   } else if (goal.status === "completed") {
     goal.status = "active";
   }
+}
+
+function refreshDerivedProductivitySignals(state) {
+  const completed = state.tasks
+    .filter((task) => task.status === "completed" && task.completedAt)
+    .slice()
+    .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
+
+  const byDate = new Map();
+  const categoryStats = {};
+  const hourStats = {};
+
+  completed.forEach((task) => {
+    const completedAt = new Date(task.completedAt);
+    const dayKey = task.completedAt.slice(0, 10);
+    const current = byDate.get(dayKey) || {
+      date: dayKey,
+      tasksCompleted: 0,
+      minutesCompleted: 0,
+      highImpactMinutes: 0,
+      lowImpactMinutes: 0
+    };
+
+    current.tasksCompleted += 1;
+    current.minutesCompleted += Number(task.durationMins || 0);
+    if (task.priority === "high" || task.effort === "high") {
+      current.highImpactMinutes += Number(task.durationMins || 0);
+    }
+    if (task.priority === "low" || ["admin", "general", "errands"].includes(task.category)) {
+      current.lowImpactMinutes += Number(task.durationMins || 0);
+    }
+    byDate.set(dayKey, current);
+
+    const category = task.category || "general";
+    categoryStats[category] = categoryStats[category] || { completed: 0, total: 0 };
+    categoryStats[category].completed += 1;
+    categoryStats[category].total += 1;
+
+    const hour = completedAt.getHours();
+    hourStats[hour] = (hourStats[hour] || 0) + 1;
+  });
+
+  state.profile.productivityHistory = [...byDate.values()]
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 90);
+
+  const last7 = state.profile.productivityHistory.slice(0, 7);
+  const avgPerDay = last7.length
+    ? last7.reduce((sum, entry) => sum + Number(entry.tasksCompleted || 0), 0) / last7.length
+    : 0;
+  const prev7 = state.profile.productivityHistory.slice(7, 14);
+  const prevAvg = prev7.length
+    ? prev7.reduce((sum, entry) => sum + Number(entry.tasksCompleted || 0), 0) / prev7.length
+    : avgPerDay;
+  state.profile.completionVelocity = {
+    avgPerDay: Math.round(avgPerDay * 10) / 10,
+    trend: avgPerDay > prevAvg * 1.1 ? "improving" : avgPerDay < prevAvg * 0.9 ? "declining" : "stable"
+  };
+
+  const bestHour = Object.entries(hourStats).sort((a, b) => b[1] - a[1])[0]?.[0];
+  state.profile.preferredWorkHours = {
+    ...(state.profile.preferredWorkHours || { start: "09:00", end: "18:00", peakFocus: "morning" }),
+    peakFocus:
+      bestHour === undefined
+        ? state.profile.preferredWorkHours?.peakFocus || "morning"
+        : Number(bestHour) < 12
+          ? "morning"
+          : Number(bestHour) < 17
+            ? "afternoon"
+            : "evening"
+  };
+
+  state.profile.categoryCompletionRate = Object.fromEntries(
+    Object.entries(categoryStats).map(([category, stats]) => [
+      category,
+      Number((stats.completed / Math.max(1, stats.total)).toFixed(2))
+    ])
+  );
 }
 
 async function addTask(input) {
@@ -873,6 +1100,31 @@ async function addWorkflow(input = {}) {
   });
 }
 
+async function updateWorkflow(id, patch = {}) {
+  return mutateState((state) => {
+    const workflow = state.workflows.find((entry) => entry.id === id);
+
+    if (!workflow) {
+      const error = new Error("Workflow not found");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    if (typeof patch.title === "string") workflow.title = patch.title.trim();
+    if (typeof patch.description === "string") workflow.description = patch.description.trim();
+    if (typeof patch.type === "string") workflow.type = patch.type.trim();
+    if (typeof patch.trigger === "string") workflow.trigger = patch.trigger.trim();
+    if (Array.isArray(patch.steps)) workflow.steps = patch.steps;
+    if (Array.isArray(patch.actions)) workflow.actions = patch.actions;
+    if (Array.isArray(patch.safeguards)) workflow.safeguards = patch.safeguards;
+    if (typeof patch.status === "string") workflow.status = patch.status;
+    if (patch.lastRunAt !== undefined) workflow.lastRunAt = patch.lastRunAt || null;
+    if (patch.runCount !== undefined) workflow.runCount = Number(patch.runCount || 0);
+    workflow.updatedAt = new Date().toISOString();
+    return workflow;
+  });
+}
+
 async function addCheckin(input = {}) {
   return mutateState((state) => {
     const checkin = {
@@ -1104,6 +1356,8 @@ async function addFeedback(input = {}) {
       retrainLocalModels().catch(() => {});
     }
 
+    refreshDerivedProductivitySignals(state);
+
     return {
       ...feedback,
       autoAdjustment: {
@@ -1193,6 +1447,125 @@ async function updateIntegrations(input = {}) {
   });
 }
 
+async function updatePlugins(input = {}) {
+  return mutateState((state) => {
+    state.profile = state.profile || {};
+    state.profile.plugins = normalizePlugins({
+      ...(state.profile.plugins || createDefaultPlugins()),
+      ...input
+    });
+    return state.profile.plugins;
+  });
+}
+
+async function updateWorldContext(input = {}) {
+  return mutateState((state) => {
+    state.profile = state.profile || {};
+    state.profile.worldContext = normalizeWorldContext({
+      ...(state.profile.worldContext || createDefaultWorldContext()),
+      ...input,
+      updatedAt: new Date().toISOString()
+    });
+    return state.profile.worldContext;
+  });
+}
+
+async function updatePrivacySettings(input = {}) {
+  return mutateState((state) => {
+    state.profile = state.profile || {};
+    state.profile.privacy = normalizePrivacySettings({
+      ...(state.profile.privacy || createDefaultPrivacySettings()),
+      ...input
+    });
+    return state.profile.privacy;
+  });
+}
+
+async function updateAutopilotSettings(input = {}) {
+  return mutateState((state) => {
+    state.profile = state.profile || {};
+    state.profile.autopilot = normalizeAutopilotSettings({
+      ...(state.profile.autopilot || createDefaultAutopilotSettings()),
+      ...input
+    });
+    return state.profile.autopilot;
+  });
+}
+
+async function addTeamMember(input = {}) {
+  return mutateState((state) => {
+    const member = normalizeTeamMember(input);
+
+    if (!member.name) {
+      const error = new Error("Team member name is required");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    state.team = Array.isArray(state.team) ? state.team : [];
+    const exists = state.team.find(
+      (entry) => entry.name.toLowerCase() === member.name.toLowerCase()
+    );
+
+    if (exists) {
+      Object.assign(exists, member, { id: exists.id, createdAt: exists.createdAt });
+      return exists;
+    }
+
+    state.team.unshift(member);
+    state.team = state.team.slice(0, 50);
+    return member;
+  });
+}
+
+async function addExecutionRequest(input = {}) {
+  return mutateState((state) => {
+    const execution = normalizeExecution(input);
+
+    if (!execution.title) {
+      const error = new Error("Execution title is required");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    state.executions.unshift(execution);
+    state.executions = state.executions.slice(0, 150);
+    logActivityEntry(state, {
+      type: "execution_created",
+      meta: {
+        actionType: execution.actionType,
+        pluginId: execution.pluginId
+      }
+    });
+    return execution;
+  });
+}
+
+async function updateExecutionRequest(id, patch = {}) {
+  return mutateState((state) => {
+    const execution = findExecutionById(state, id);
+    if (typeof patch.title === "string") execution.title = patch.title.trim();
+    if (typeof patch.actionType === "string") execution.actionType = patch.actionType.trim();
+    if (typeof patch.pluginId === "string") execution.pluginId = patch.pluginId.trim();
+    if (typeof patch.prompt === "string") execution.prompt = patch.prompt.trim();
+    if (patch.preview && typeof patch.preview === "object") execution.preview = patch.preview;
+    if (patch.result && typeof patch.result === "object") execution.result = patch.result;
+    if (patch.error !== undefined) execution.error = patch.error ? String(patch.error) : "";
+    if (patch.requiresConfirmation !== undefined) execution.requiresConfirmation = patch.requiresConfirmation !== false;
+    if (patch.status !== undefined) execution.status = normalizeExecution({ status: patch.status }).status;
+    if (patch.completedAt !== undefined) execution.completedAt = patch.completedAt || null;
+    execution.updatedAt = new Date().toISOString();
+    logActivityEntry(state, {
+      type: "execution_updated",
+      meta: {
+        executionId: execution.id,
+        status: execution.status
+      }
+    });
+    return execution;
+  });
+}
+
 async function updateProductivityHistory(entry) {
   return mutateState((state) => {
     state.profile.productivityHistory = state.profile.productivityHistory || [];
@@ -1235,6 +1608,7 @@ module.exports = {
   addProject,
   addKnowledgeItem,
   addWorkflow,
+  updateWorkflow,
   addCheckin,
   addConversation,
   recordChatPattern,
@@ -1244,5 +1618,12 @@ module.exports = {
   addActivity,
   addArtifact,
   updateIntegrations,
+  updatePlugins,
+  updateWorldContext,
+  updatePrivacySettings,
+  updateAutopilotSettings,
+  addTeamMember,
+  addExecutionRequest,
+  updateExecutionRequest,
   updateProductivityHistory
 };

@@ -537,8 +537,19 @@ function buildMemoryGraph(state) {
     nodes.push({ id, label, type });
   }
 
+  (state.projects || []).slice(0, 5).forEach((project) => {
+    addNode(project.id, project.name, "project");
+  });
+
   (state.goals || []).slice(0, 5).forEach((goal) => {
     addNode(goal.id, goal.title, "goal");
+    if (goal.projectId) {
+      edges.push({
+        from: goal.id,
+        to: goal.projectId,
+        label: "belongs to"
+      });
+    }
   });
 
   (state.tasks || [])
@@ -551,6 +562,14 @@ function buildMemoryGraph(state) {
           from: task.id,
           to: task.goalId,
           label: "supports"
+        });
+      }
+
+      if (task.projectId) {
+        edges.push({
+          from: task.id,
+          to: task.projectId,
+          label: "belongs to"
         });
       }
 
@@ -582,12 +601,44 @@ function buildMemoryGraph(state) {
         to: person,
         label: "depends on"
       });
+      });
     });
-  });
+
+  (state.artifacts || [])
+    .slice(0, 6)
+    .forEach((artifact) => {
+      const type =
+        artifact.kind === "document" ? "document"
+          : artifact.kind === "decision" || artifact.kind === "comparison" ? "decision"
+            : artifact.kind === "research" ? "research"
+              : "artifact";
+      addNode(artifact.id, artifact.title, type);
+
+      if (artifact.projectId) {
+        edges.push({
+          from: artifact.id,
+          to: artifact.projectId,
+          label: "created for"
+        });
+      }
+    });
+
+  (state.knowledge || [])
+    .slice(0, 6)
+    .forEach((item) => {
+      addNode(item.id, item.title || item.category || "memory", "memory");
+      if (item.projectId) {
+        edges.push({
+          from: item.id,
+          to: item.projectId,
+          label: "stored in"
+        });
+      }
+    });
 
   return {
     nodes,
-    edges: edges.slice(0, 16)
+    edges: edges.slice(0, 24)
   };
 }
 

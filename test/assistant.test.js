@@ -2,7 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs/promises");
 const path = require("node:path");
-const { DATA_FILE, createDefaultState, readState } = require("../src/store");
+const { DATA_FILE, createDefaultState, readState, addTask, addCheckin } = require("../src/store");
 const { handleChat } = require("../src/assistant");
 
 const realFetch = global.fetch;
@@ -106,4 +106,30 @@ test("chat can turn a natural deadline request into a goal through Ollama routin
     assert.ok(state.goals.some((goal) => goal.title === "Launch my app"));
     assert.ok(state.tasks.length >= 1);
   });
+});
+
+test("goal chat uses autonomous planning and stores the roadmap artifact", async () => {
+  await resetStore();
+
+  const result = await handleChat("goal launch my app in 20 days");
+  const state = await readState();
+
+  assert.ok(result.goal);
+  assert.ok(result.goalPlan);
+  assert.ok(result.goalPlan.dailyHoursNeeded > 0);
+  assert.ok(state.artifacts.some((artifact) => artifact.kind === "autonomous-goal-plan"));
+});
+
+test("chat can preview life autopilot in conversation", async () => {
+  await resetStore();
+  await addTask({ title: "Deep architecture review", effort: "high", priority: "high", durationMins: 120 });
+  await addTask({ title: "Reply to client email", effort: "low", priority: "medium", durationMins: 20 });
+  await addCheckin({ energy: "low", focus: "scattered", mood: "tired" });
+
+  const result = await handleChat("rebalance my day with autopilot");
+  const state = await readState();
+
+  assert.ok(result.autopilot);
+  assert.ok(result.autopilot.focusNow.length >= 1);
+  assert.ok(state.artifacts.some((artifact) => artifact.kind === "autopilot-run"));
 });

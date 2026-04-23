@@ -4,6 +4,7 @@ const ui = {
   pages: [...document.querySelectorAll(".page")],
   projectSelects: [...document.querySelectorAll(".project-select")],
   pageTitle: $("pageTitle"),
+  pageSubtitle: $("pageSubtitle"),
   modeBadge: $("modeBadge"),
   contextSummary: $("contextSummary"),
   aiConnectionBadge: $("aiConnectionBadge"),
@@ -68,6 +69,22 @@ const ui = {
   "aiSetupResult",
   "scheduleTimeline", "scheduleWarnings", "scheduleSummary", "scheduleAtRisk",
   "scheduleRebalanceBtn",
+  "executionPlanForm", "executionPlannerResult", "executionQueue",
+  "automationBuildForm", "automationBuildResult", "automationSuggestions", "automationWorkflowList", "runAutomationsBtn",
+  "voiceJournalForm", "voiceJournalResult", "voiceStartBtn", "voiceStopBtn", "voiceStatus", "voiceTranscript",
+  "analyticsSummary", "analyticsWeeklyCard", "analyticsPerformanceCard", "analyticsBurnoutCard",
+  "analyticsGoalProbabilityCard", "analyticsAvoidanceCard", "analyticsPersonalizationCard", "analyticsUsageCard",
+  "timeSimulationForm", "timeSimulationResult", "delayExplainForm", "delayExplainResult",
+  "digitalTwinCard", "digitalTwinSimulationForm", "digitalTwinSimulationResult", "futureTimelineCard",
+  "habitDnaCard", "emotionalIntelligenceCard", "playbooksCard", "strategyEngineCard",
+  "subconsciousPatternsCard", "gamificationCard", "privacyModeCard", "privacySettingsForm",
+  "teamBrainCard", "contextEngineCard", "metaLearningCard", "autopilotAnalyticsCard",
+  "autopilotSettingsForm", "runAutopilotBtn", "autopilotResult",
+  "worldContextForm", "worldContextResult",
+  "teamMemberForm", "teamResult",
+  "goalAutoplanForm", "goalAutoplanResult",
+  "pluginCatalog", "pluginSettingsForm", "pluginSettingsResult",
+  "developerImportBtn", "developerImportResult",
   "jiraStatus", "jiraSyncBtn", "jiraSyncResult",
   "githubStatus", "githubRefreshBtn", "githubDashboard",
   "notionStatus", "notionListBtn", "notionDatabaseList", "notionSyncBtn", "notionSyncResult", "notionCreateProject",
@@ -82,11 +99,34 @@ const state = {
   dashboard: null,
   knowledgeQuery: null,
   workflowBlueprint: null,
+  automationDraft: null,
+  latestExecution: null,
+  delayAnalysis: null,
+  timeSimulation: null,
+  twinSimulation: null,
+  voiceJournal: null,
+  worldContext: null,
+  autopilotRun: null,
+  goalAutoplan: null,
+  teamUpdate: null,
+  privacyUpdate: null,
+  pluginUpdate: null,
+  developerImport: null,
   aiStatus: null,
   mlMetrics: null,
   auth: null
 };
 const pageTitles = Object.fromEntries(ui.navLinks.map((button) => [button.dataset.viewTarget, (button.querySelector("span") || button).textContent.trim()]));
+const pageSubtitles = {
+  today: "Your clearest next move, today only",
+  schedule: "See capacity, overload, and deadline pressure",
+  agent: "Autopilot, actions, automations, voice, and team control",
+  analytics: "Digital twin, future timelines, habits, and strategy",
+  create: "Build documents, to-do lists, research, and drafts",
+  projects: "Goals, constraints, and decisions across projects",
+  memory: "Files, notes, meetings, and connected memory",
+  integrations: "Connect external tools and manage plugins"
+};
 const artifactTargets = {
   document: "docResult",
   "todo-plan": "todoBuilderResult",
@@ -105,7 +145,16 @@ const artifactTargets = {
   "role-lens": "roleResult",
   "action-pack": "actionHubResult",
   negotiation: "negotiationResult",
-  sandbox: "sandboxResult"
+  sandbox: "sandboxResult",
+  "time-simulation": "timeSimulationResult",
+  "voice-journal": "voiceJournalResult",
+  "meeting-plan": "executionPlannerResult",
+  "developer-sync": "developerImportResult",
+  "digital-twin-simulation": "digitalTwinSimulationResult",
+  "autonomous-goal-plan": "goalAutoplanResult",
+  "autopilot-run": "autopilotResult",
+  "spreadsheet-pack": "actionHubResult",
+  "crm-pack": "actionHubResult"
 };
 
 function escapeHtml(value) {
@@ -115,6 +164,13 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function normalizeUiText(value) {
+  return String(value || "")
+    .replaceAll("â€™", "'")
+    .replaceAll("Â·", "|")
+    .replaceAll("â€”", "-");
 }
 
 function setHtml(node, html) {
@@ -238,6 +294,597 @@ function artifactHtml(kind, payload) {
   }
 
   return objectHtml(payload);
+}
+
+function graphColor(type) {
+  return {
+    goal: "var(--accent)",
+    task: "var(--teal)",
+    project: "var(--gold)",
+    person: "var(--sky)",
+    habit: "var(--red)",
+    document: "#c084fc",
+    decision: "#fb7185",
+    research: "#22c55e",
+    artifact: "#f97316",
+    memory: "#eab308"
+  }[type] || "var(--ink-soft)";
+}
+
+function memoryGraphHtml(graph) {
+  const nodes = graph?.nodes || [];
+  const edges = graph?.edges || [];
+  if (!nodes.length) {
+    return `<p class="empty-state">As you add tasks, goals, docs, and notes, Buksy will connect them here.</p>`;
+  }
+
+  const width = 720;
+  const height = 320;
+  const centerX = width / 2;
+  const centerY = height / 2;
+  const byType = {};
+
+  nodes.forEach((node) => {
+    const type = node.type || "node";
+    byType[type] = byType[type] || [];
+    byType[type].push(node);
+  });
+
+  const positions = {};
+  const types = Object.keys(byType);
+  types.forEach((type, typeIndex) => {
+    const bucket = byType[type];
+    const orbit = 58 + typeIndex * 26;
+    bucket.forEach((node, index) => {
+      const angle = ((Math.PI * 2) / Math.max(1, bucket.length)) * index + typeIndex * 0.48;
+      positions[node.id] = {
+        x: centerX + Math.cos(angle) * orbit,
+        y: centerY + Math.sin(angle) * orbit
+      };
+    });
+  });
+
+  return `
+    <div class="memory-graph-wrap">
+      <svg class="memory-graph" viewBox="0 0 ${width} ${height}" role="img" aria-label="Buksy memory graph">
+        <defs>
+          <filter id="memoryGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="5" result="coloredBlur"></feGaussianBlur>
+            <feMerge>
+              <feMergeNode in="coloredBlur"></feMergeNode>
+              <feMergeNode in="SourceGraphic"></feMergeNode>
+            </feMerge>
+          </filter>
+        </defs>
+        ${edges.map((edge) => {
+          const from = positions[edge.from];
+          const to = positions[edge.to];
+          if (!from || !to) return "";
+          const labelX = (from.x + to.x) / 2;
+          const labelY = (from.y + to.y) / 2;
+          return `
+            <line x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}" stroke="rgba(255,255,255,0.16)" stroke-width="1.5" />
+            <text x="${labelX}" y="${labelY - 4}" text-anchor="middle" class="memory-edge-label">${escapeHtml(edge.label || "")}</text>
+          `;
+        }).join("")}
+        ${nodes.map((node) => {
+          const pos = positions[node.id];
+          if (!pos) return "";
+          return `
+            <g transform="translate(${pos.x} ${pos.y})" filter="url(#memoryGlow)">
+              <circle r="18" fill="${graphColor(node.type)}" fill-opacity="0.18" stroke="${graphColor(node.type)}" stroke-width="2"></circle>
+              <text y="4" text-anchor="middle" class="memory-node-label">${escapeHtml(String(node.label || "").slice(0, 14))}</text>
+            </g>
+          `;
+        }).join("")}
+      </svg>
+      <div class="pill-row">
+        ${types.map((type) => `<span class="pill"><span class="legend-dot" style="background:${graphColor(type)}"></span>${escapeHtml(titleCase(type))}</span>`).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function executionQueueHtml(executions = []) {
+  if (!executions.length) {
+    return `<p class="empty-state">Planned actions waiting for confirmation will appear here.</p>`;
+  }
+
+  return executions.map((execution) => `
+    <article class="mini-card dense-card execution-card execution-${escapeHtml(execution.status)}">
+      <div class="task-card-header">
+        <div>
+          <strong>${escapeHtml(execution.title)}</strong>
+          <p class="note-copy">${escapeHtml(execution.prompt || execution.preview?.summary || "")}</p>
+        </div>
+        <span class="status-chip">${escapeHtml(titleCase(execution.status))}</span>
+      </div>
+      <div class="pill-row">
+        <span class="pill">${escapeHtml(execution.actionType)}</span>
+        <span class="pill">${escapeHtml(execution.pluginId || "local")}</span>
+        <span class="pill">${escapeHtml(formatDate(execution.updatedAt || execution.createdAt, true))}</span>
+      </div>
+      ${(execution.preview?.steps || []).length ? listHtml(execution.preview.steps, "No preview steps.") : ""}
+      ${execution.error ? `<p class="note-copy">${escapeHtml(execution.error)}</p>` : ""}
+      <div class="action-row">
+        ${execution.status === "pending_confirmation" ? `<button class="primary-button" type="button" data-execution-approve="${escapeHtml(execution.id)}">Approve</button>` : ""}
+        ${["approved", "pending_confirmation"].includes(execution.status) ? `<button class="soft-button" type="button" data-execution-run="${escapeHtml(execution.id)}">Run</button>` : ""}
+        ${["pending_confirmation", "approved"].includes(execution.status) ? `<button class="ghost-button" type="button" data-execution-cancel="${escapeHtml(execution.id)}">Cancel</button>` : ""}
+      </div>
+    </article>
+  `).join("");
+}
+
+function executionPreviewHtml(execution) {
+  if (!execution) {
+    return `<p class="empty-state">Plan an action and Buksy will show the exact confirmation preview here.</p>`;
+  }
+
+  return `
+    <div class="mini-card dense-card">
+      <div class="task-card-header">
+        <div>
+          <strong>${escapeHtml(execution.title)}</strong>
+          <p class="note-copy">${escapeHtml(execution.preview?.summary || execution.prompt || "")}</p>
+        </div>
+        <span class="status-chip">${escapeHtml(titleCase(execution.status || "pending_confirmation"))}</span>
+      </div>
+      ${listHtml(execution.preview?.steps || [], "No preview steps yet.")}
+    </div>
+  `;
+}
+
+function automationSuggestionsHtml(suggestions = []) {
+  return suggestions.length
+    ? suggestions.map((item) => `
+      <div class="mini-card dense-card">
+        <strong>${escapeHtml(item.title)}</strong>
+        <p class="note-copy">${escapeHtml(titleCase(item.trigger))}</p>
+        ${listHtml(item.matches || [], "No trigger matches.")}
+        ${listHtml(item.recommendedActions || [], "No actions yet.")}
+      </div>
+    `).join("")
+    : `<p class="empty-state">No automation is currently firing. Create a rule and Buksy will watch for the trigger.</p>`;
+}
+
+function automationWorkflowHtml(workflows = []) {
+  return workflows.length
+    ? workflows.map((workflow) => `
+      <div class="mini-card dense-card">
+        <div class="task-card-header">
+          <div>
+            <strong>${escapeHtml(workflow.title)}</strong>
+            <p class="note-copy">${escapeHtml(workflow.description || workflow.triggerLabel || "")}</p>
+          </div>
+          <span class="status-chip">${escapeHtml(workflow.status || "draft")}</span>
+        </div>
+        ${listHtml(workflow.actions || workflow.steps || [], "No workflow steps yet.")}
+      </div>
+    `).join("")
+    : `<p class="empty-state">Automation rules will appear here after you create one.</p>`;
+}
+
+function pluginCatalogHtml(plugins = []) {
+  if (!plugins.length) {
+    return `<p class="empty-state">No plugins loaded yet.</p>`;
+  }
+
+  return `
+    <div class="plugin-grid">
+      ${plugins.map((plugin) => `
+        <div class="mini-card dense-card plugin-card">
+          <div class="task-card-header">
+            <div>
+              <strong>${escapeHtml(plugin.name)}</strong>
+              <p class="note-copy">${escapeHtml(plugin.statusCopy || "")}</p>
+            </div>
+            <span class="status-chip">${plugin.connected ? "Connected" : "Local"}</span>
+          </div>
+          <div class="pill-row">
+            <span class="pill">${escapeHtml(plugin.category || "general")}</span>
+            <span class="pill">${escapeHtml(plugin.mode || "default")}</span>
+          </div>
+          ${listHtml(plugin.capabilities || [], "No capabilities listed.")}
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+function analyticsSummaryHtml(analytics = {}) {
+  const weekly = analytics.weekly || {};
+  const burnout = analytics.burnout || {};
+  const performance = analytics.performance || {};
+  const usage = analytics.usage || {};
+  return `
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-label">Completed 7d</div><div class="stat-value">${escapeHtml(weekly.completedLast7Days || 0)}</div></div>
+      <div class="stat-card"><div class="stat-label">Best window</div><div class="stat-value">${escapeHtml(performance.bestWindow || "Learning")}</div></div>
+      <div class="stat-card"><div class="stat-label">Burnout</div><div class="stat-value">${escapeHtml(titleCase(burnout.level || "low"))}</div></div>
+      <div class="stat-card"><div class="stat-label">Credits left</div><div class="stat-value">${escapeHtml(usage.remainingCredits || 0)}</div></div>
+    </div>
+  `;
+}
+
+function performanceHtml(performance = {}) {
+  return `
+    <div class="result-stack">
+      <p class="result-copy">${escapeHtml(performance.bestWindow ? `Best recent window: ${performance.bestWindow}.` : "Buksy is still learning your best work windows.")}</p>
+      ${(performance.windows || []).length ? `
+        <div class="window-list">
+          ${(performance.windows || []).map((window) => `
+            <div class="detail-row">
+              <strong>${escapeHtml(window.window)}</strong>
+              <span class="pill">${escapeHtml(window.completions)} completions</span>
+              <span class="pill">${escapeHtml(Math.round(window.minutes || 0))} mins</span>
+            </div>
+          `).join("")}
+        </div>
+      ` : `<p class="empty-state">Complete more tasks to reveal performance windows.</p>`}
+    </div>
+  `;
+}
+
+function burnoutHtml(burnout = {}) {
+  return `
+    <div class="result-stack">
+      <div class="metric-band">
+        <span class="metric-pill">Score ${escapeHtml(burnout.score || 0)}</span>
+        <span class="metric-pill">${escapeHtml(titleCase(burnout.level || "low"))}</span>
+      </div>
+      <p class="result-copy">${escapeHtml(burnout.message || "No burnout signal yet.")}</p>
+      <div class="pill-row">
+        <span class="pill">${escapeHtml(burnout.lowEnergyCount || 0)} low-energy check-ins</span>
+        <span class="pill">${escapeHtml(burnout.scatteredCount || 0)} scattered-focus check-ins</span>
+        <span class="pill">${escapeHtml(burnout.autoDeferred || 0)} auto deferrals</span>
+      </div>
+    </div>
+  `;
+}
+
+function goalProbabilityHtml(goals = []) {
+  return goals.length
+    ? goals.map((goal) => `
+      <div class="goal-probability">
+        <div class="detail-row">
+          <strong>${escapeHtml(goal.title)}</strong>
+          <span class="pill">${escapeHtml(goal.probability)}%</span>
+        </div>
+        <div class="progress-bar"><span style="width:${Math.max(6, Number(goal.probability || 0))}%"></span></div>
+        <p class="note-copy">${escapeHtml(goal.message)}</p>
+      </div>
+    `).join("")
+    : `<p class="empty-state">Create a goal and Buksy will start projecting success odds here.</p>`;
+}
+
+function avoidanceHtml(items = []) {
+  return items.length
+    ? items.map((item) => `
+      <div class="mini-card dense-card">
+        <div class="detail-row">
+          <strong>${escapeHtml(item.title)}</strong>
+          <span class="pill">${escapeHtml(item.skippedCount || 0)} skips</span>
+          <span class="pill">${escapeHtml(item.suggestionCount || 0)} nudges</span>
+        </div>
+        <p class="note-copy">${escapeHtml(item.notes || "Buksy is seeing hesitation here.")}</p>
+      </div>
+    `).join("")
+    : `<p class="empty-state">No strong avoidance pattern yet.</p>`;
+}
+
+function personalizationHtml(profile = {}) {
+  return `
+    <div class="result-stack">
+      <div class="pill-row">
+        <span class="pill">${escapeHtml(profile.operatingMode || "learning")} mode</span>
+        <span class="pill">${escapeHtml(profile.suggestionStyle || "adaptive")} style</span>
+        <span class="pill">${escapeHtml(profile.preferredDuration || "short")} duration</span>
+        <span class="pill">${escapeHtml(profile.preferredEffort || "medium")} effort</span>
+      </div>
+      <p class="result-copy">${escapeHtml(profile.lowEnergyStrategy || "Buksy is still learning your low-energy pattern.")}</p>
+      ${listHtml((profile.taskDifficultyByTime || []).map((item) => `${item.window}: ${item.suggestion}`), "No timing rules yet.")}
+    </div>
+  `;
+}
+
+function usageHtml(usage = {}) {
+  return `
+    <div class="result-stack">
+      <div class="metric-band">
+        <span class="metric-pill">${escapeHtml(usage.plan || "Free")}</span>
+        <span class="metric-pill">${escapeHtml(usage.creditsUsed || 0)} used</span>
+        <span class="metric-pill">${escapeHtml(usage.remainingCredits || 0)} left</span>
+      </div>
+      <div class="pill-row">
+        <span class="pill">${escapeHtml(usage.aiRequests || 0)} AI requests</span>
+        <span class="pill">${escapeHtml(usage.advancedRuns || 0)} advanced runs</span>
+      </div>
+      <p class="note-copy">This is local plan scaffolding for premium usage design, not billing.</p>
+    </div>
+  `;
+}
+
+function timeSimulationHtml(result) {
+  if (!result) {
+    return `<p class="empty-state">Run a simulation to see projected finish dates and weekly pressure.</p>`;
+  }
+
+  return `
+    <div class="result-stack">
+      <p class="result-copy">${escapeHtml(result.message || "")}</p>
+      <div class="pill-row">
+        <span class="pill">${escapeHtml(result.totalMinutes || 0)} mins total</span>
+        <span class="pill">${escapeHtml(result.dailyHours || 0)} hrs/day</span>
+        <span class="pill">${escapeHtml(result.projectedFinishDate || "n/a")}</span>
+        ${result.targetDate ? `<span class="pill">Target ${escapeHtml(result.targetDate)}</span>` : ""}
+      </div>
+      ${listHtml((result.whatMustHappenThisWeek || []).map((item) => `This week: ${item}`), "No weekly pressure items.")}
+      ${listHtml((result.timeline || []).map((item) => `${item.date}: ${item.plannedMinutes} mins, ${item.remainingMinutes} mins left`), "No timeline yet.")}
+    </div>
+  `;
+}
+
+function futureTimelineHtml(future = {}) {
+  const modes = future.modes || [];
+  if (!modes.length) {
+    return `<p class="empty-state">Buksy needs active work to project multiple futures.</p>`;
+  }
+
+  const width = 680;
+  const height = 220;
+  const padding = 28;
+  const colors = {
+    aggressive: "#f97316",
+    balanced: "var(--accent)",
+    lazy: "#34d399"
+  };
+
+  const svg = `
+    <svg class="future-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Future timeline chart">
+      ${[0, 25, 50, 75, 100].map((mark) => {
+        const y = height - padding - ((height - padding * 2) * mark / 100);
+        return `
+          <line x1="${padding}" y1="${y}" x2="${width - padding}" y2="${y}" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+          <text x="8" y="${y + 4}" class="chart-axis-label">${mark}%</text>
+        `;
+      }).join("")}
+      ${modes.map((mode) => {
+        const points = (mode.points || []).map((point, index, rows) => {
+          const x = padding + ((width - padding * 2) * index / Math.max(1, rows.length - 1));
+          const y = height - padding - ((height - padding * 2) * Number(point.completion || 0) / 100);
+          return { ...point, x, y };
+        });
+        return `
+          <polyline fill="none" stroke="${colors[mode.id] || "var(--ink)"}" stroke-width="3" points="${points.map((point) => `${point.x},${point.y}`).join(" ")}"></polyline>
+          ${points.map((point) => `
+            <circle cx="${point.x}" cy="${point.y}" r="4" fill="${colors[mode.id] || "var(--ink)"}"></circle>
+            <text x="${point.x}" y="${height - 8}" text-anchor="middle" class="chart-axis-label">${point.day}d</text>
+          `).join("")}
+        `;
+      }).join("")}
+    </svg>
+  `;
+
+  return `
+    <div class="result-stack">
+      <p class="result-copy">${escapeHtml(future.summary || "")}</p>
+      ${svg}
+      <div class="timeline-mode-grid">
+        ${modes.map((mode) => `
+          <div class="mini-card dense-card">
+            <div class="detail-row">
+              <strong>${escapeHtml(mode.label)}</strong>
+              <span class="pill">${escapeHtml(mode.projectedTasksPer30Days)} tasks / 30d</span>
+            </div>
+            <p class="note-copy">${escapeHtml(mode.summary || "")}</p>
+            <p class="note-copy">${escapeHtml(mode.sixMonthMessage || "")}</p>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function digitalTwinHtml(twin = {}) {
+  const triggers = twin.procrastinationTriggers || [];
+  return `
+    <div class="result-stack">
+      <div class="pill-row">
+        <span class="pill">${escapeHtml(titleCase(twin.riskTolerance || "medium"))} risk</span>
+        <span class="pill">${escapeHtml(twin.followThroughScore || 0)}% follow-through</span>
+      </div>
+      <p class="result-copy">${escapeHtml(twin.summary || "Buksy is still learning your behavioral profile.")}</p>
+      ${twin.likelyToday ? `<p class="note-copy"><strong>Likely today:</strong> ${escapeHtml(twin.likelyToday)}</p>` : ""}
+      ${(twin.decisionPatterns || []).length ? `<div class="mini-card dense-card"><strong>How you usually commit</strong>${listHtml(twin.decisionPatterns, "No decision patterns yet.")}</div>` : ""}
+      ${triggers.length ? `
+        <div class="mini-stack">
+          ${triggers.map((trigger) => `
+            <div class="mini-card dense-card">
+              <strong>${escapeHtml(trigger.title)}</strong>
+              ${listHtml(trigger.reasons || [], "No friction signals yet.")}
+            </div>
+          `).join("")}
+        </div>
+      ` : `<p class="empty-state">No strong hesitation triggers yet.</p>`}
+    </div>
+  `;
+}
+
+function habitDnaHtml(report = {}) {
+  const patterns = report.patterns || [];
+  return `
+    <div class="result-stack">
+      <p class="result-copy">${escapeHtml(report.summary || "Buksy is still learning your root behavior patterns.")}</p>
+      ${patterns.length ? patterns.map((pattern) => `
+        <div class="mini-card dense-card">
+          <strong>${escapeHtml(pattern.title)}</strong>
+          <p class="note-copy">${escapeHtml(pattern.pattern || "")}</p>
+          <p class="note-copy"><strong>Adjustment:</strong> ${escapeHtml(pattern.intervention || "No intervention yet.")}</p>
+        </div>
+      `).join("") : `<p class="empty-state">No habit DNA patterns yet.</p>`}
+    </div>
+  `;
+}
+
+function emotionalIntelligenceHtml(report = {}) {
+  return `
+    <div class="result-stack">
+      <div class="pill-row">
+        <span class="pill">${escapeHtml(report.lowEnergyDays || 0)} low-energy days</span>
+        <span class="pill">${escapeHtml(report.scatteredMoments || 0)} scattered moments</span>
+        <span class="pill">${escapeHtml(report.frustrationSignals || 0)} frustration signals</span>
+      </div>
+      <p class="result-copy">${escapeHtml(report.summary || "Buksy is monitoring emotional workload.")}</p>
+      ${listHtml(report.interventions || [], "No interventions needed right now.")}
+    </div>
+  `;
+}
+
+function playbooksHtml(playbooks = {}) {
+  const rows = playbooks.playbooks || [];
+  return rows.length
+    ? rows.map((playbook) => `
+      <div class="mini-card dense-card">
+        <strong>${escapeHtml(playbook.title)}</strong>
+        <p class="note-copy">${escapeHtml(playbook.pattern)}</p>
+        <p class="note-copy"><strong>When:</strong> ${escapeHtml(playbook.whenToUse || "Whenever it fits.")}</p>
+        ${listHtml(playbook.steps || [], "No steps yet.")}
+      </div>
+    `).join("")
+    : `<p class="empty-state">Buksy is still learning reusable playbooks from your behavior.</p>`;
+}
+
+function strategyHtml(strategy = {}) {
+  return `
+    <div class="result-stack">
+      <p class="result-copy">${escapeHtml(strategy.summary || "")}</p>
+      ${strategy.recommendation ? `<p class="note-copy">${escapeHtml(strategy.recommendation)}</p>` : ""}
+      ${(strategy.focusAreas || []).length ? (strategy.focusAreas || []).map((item) => `
+        <div class="mini-card dense-card">
+          <div class="detail-row">
+            <strong>${escapeHtml(item.title)}</strong>
+            <span class="pill">${escapeHtml(item.score)}</span>
+          </div>
+          <p class="note-copy">${escapeHtml(item.reason || "")}</p>
+        </div>
+      `).join("") : `<p class="empty-state">No strategic focus areas yet.</p>`}
+      ${(strategy.goalOpportunities || []).length ? `<div class="mini-card dense-card"><strong>Goal opportunities</strong>${listHtml(strategy.goalOpportunities, "No goal opportunities yet.")}</div>` : ""}
+    </div>
+  `;
+}
+
+function teamBrainHtml(team = {}) {
+  return `
+    <div class="result-stack">
+      <p class="result-copy">${escapeHtml(team.summary || "Add teammates and tagged tasks to unlock shared planning.")}</p>
+      ${(team.members || []).length ? `
+        <div class="mini-stack">
+          ${(team.members || []).map((member) => `
+            <div class="mini-card dense-card">
+              <div class="detail-row">
+                <strong>${escapeHtml(member.name)}</strong>
+                <span class="pill">${escapeHtml(member.openItems || 0)} open</span>
+              </div>
+              <p class="note-copy">${escapeHtml(member.role || "Teammate")}${member.focusArea ? ` - ${escapeHtml(member.focusArea)}` : ""}</p>
+            </div>
+          `).join("")}
+        </div>
+      ` : `<p class="empty-state">No teammates added yet.</p>`}
+      ${(team.blockers || []).length ? `
+        <div class="mini-card dense-card">
+          <strong>Active blockers</strong>
+          ${listHtml((team.blockers || []).map((blocker) => `${blocker.title}: ${blocker.reason}`), "No blockers right now.")}
+        </div>
+      ` : ""}
+      ${(team.suggestions || []).length ? `<div class="mini-card dense-card"><strong>What Buksy would do</strong>${listHtml(team.suggestions, "No team suggestions yet.")}</div>` : ""}
+    </div>
+  `;
+}
+
+function gamificationHtml(game = {}) {
+  return `
+    <div class="result-stack">
+      <div class="metric-band">
+        <span class="metric-pill">XP ${escapeHtml(game.xp || 0)}</span>
+        <span class="metric-pill">Level ${escapeHtml(game.level || 1)}</span>
+        <span class="metric-pill">${escapeHtml(game.streak || 0)} day streak</span>
+      </div>
+      <p class="result-copy">${escapeHtml(game.summary || "")}</p>
+      ${listHtml((game.unlocks || []).map((item) => `Unlocked: ${item}`), "No unlocks yet.")}
+    </div>
+  `;
+}
+
+function contextEngineHtml(report = {}) {
+  return `
+    <div class="result-stack">
+      <div class="pill-row">
+        <span class="pill">${escapeHtml(report.locationLabel || "No location")}</span>
+        <span class="pill">${escapeHtml(report.workMode || "auto")}</span>
+        <span class="pill">${escapeHtml(report.sleepHours || 0)}h sleep</span>
+      </div>
+      <p class="note-copy"><strong>Weather:</strong> ${escapeHtml(report.weather || "No local snapshot")}</p>
+      <p class="note-copy"><strong>Signal:</strong> ${escapeHtml(report.newsSignal || "No outside-world note")}</p>
+      ${listHtml(report.recommendations || [], "No context recommendations yet.")}
+    </div>
+  `;
+}
+
+function subconsciousHtml(report = {}) {
+  return `
+    <div class="result-stack">
+      <p class="result-copy">${escapeHtml(report.summary || "Buksy is looking for hidden patterns in your behavior.")}</p>
+      ${listHtml(report.patterns || [], "No subconscious patterns yet.")}
+    </div>
+  `;
+}
+
+function metaLearningHtml(report = {}) {
+  return `
+    <div class="result-stack">
+      <p class="result-copy">${escapeHtml(report.summary || "Buksy is learning what works for you.")}</p>
+      <div class="mini-card dense-card">
+        <strong>Current biases</strong>
+        ${listHtml(report.currentBiases || [], "No learned biases yet.")}
+      </div>
+      <div class="mini-card dense-card">
+        <strong>Next optimizations</strong>
+        ${listHtml(report.nextOptimizations || [], "No optimizations yet.")}
+      </div>
+    </div>
+  `;
+}
+
+function privacyHtml(privacy = {}) {
+  return `
+    <div class="result-stack">
+      <div class="pill-row">
+        <span class="pill">${privacy.localFirst ? "Local-first" : "Hybrid"}</span>
+        <span class="pill">${privacy.offlinePreferred ? "Offline preferred" : "Online mixed"}</span>
+        <span class="pill">${escapeHtml(privacy.dataSharing || "local_only")}</span>
+      </div>
+      <p class="result-copy">${escapeHtml(privacy.summary || "")}</p>
+      <div class="pill-row">
+        <span class="pill">${escapeHtml(privacy.connectedIntegrations || 0)} integrations</span>
+        <span class="pill">${escapeHtml(privacy.connectedPlugins || 0)} plugins</span>
+      </div>
+    </div>
+  `;
+}
+
+function autopilotHtml(autopilot = {}) {
+  return `
+    <div class="result-stack">
+      <div class="pill-row">
+        <span class="pill">${autopilot.ready ? "Enabled" : "Preview"}</span>
+        <span class="pill">${escapeHtml(autopilot.settings?.mode || "balanced")}</span>
+        <span class="pill">${escapeHtml(autopilot.confidence || 0)}% twin confidence</span>
+      </div>
+      <p class="result-copy">${escapeHtml(autopilot.summary || "")}</p>
+      ${autopilot.nextAnchor ? `<p class="note-copy"><strong>Next anchor:</strong> ${escapeHtml(autopilot.nextAnchor)}</p>` : ""}
+      ${listHtml(autopilot.guardrails || [], "No guardrails yet.")}
+    </div>
+  `;
 }
 
 function dailyBriefHtml(dashboard) {
@@ -382,6 +1029,7 @@ function view(name) {
   ui.navLinks.forEach((button) => button.classList.toggle("active", button.dataset.viewTarget === name));
   ui.pages.forEach((page) => page.classList.toggle("active", page.dataset.view === name));
   if (ui.pageTitle) ui.pageTitle.textContent = pageTitles[name] || "Buksy";
+  if (ui.pageSubtitle) ui.pageSubtitle.textContent = pageSubtitles[name] || "One place for tasks, plans, docs, and memory";
 }
 
 function formObject(form) {
@@ -484,6 +1132,7 @@ function renderDashboard(dashboard) {
     } else {
       setHtml(ui.googleCalStatus, oauth.googleOAuth ? "Not connected yet." : "Add Google OAuth env vars to enable.");
     }
+    ui.googleCalStatus.innerHTML = normalizeUiText(ui.googleCalStatus.innerHTML);
   }
   if (ui.aiSetupForm) {
     const ai = dashboard.state.profile?.ai || {};
@@ -491,6 +1140,47 @@ function renderDashboard(dashboard) {
     const model = ui.aiSetupForm.elements.namedItem("model");
     if (baseUrl) baseUrl.value = ai.baseUrl || "";
     if (model) model.value = ai.model || "";
+  }
+  if (ui.pluginSettingsForm) {
+    const plugins = dashboard.state.profile?.plugins || {};
+    const gmailMode = ui.pluginSettingsForm.elements.namedItem("gmailMode");
+    const googleCalendarWritable = ui.pluginSettingsForm.elements.namedItem("googleCalendarWritable");
+    const slackEnabled = ui.pluginSettingsForm.elements.namedItem("slackEnabled");
+    const stripeEnabled = ui.pluginSettingsForm.elements.namedItem("stripeEnabled");
+    const webhookEnabled = ui.pluginSettingsForm.elements.namedItem("webhookEnabled");
+    const webhookUrl = ui.pluginSettingsForm.elements.namedItem("webhookUrl");
+    if (gmailMode) gmailMode.value = plugins.gmail?.mode || "draft_only";
+    if (googleCalendarWritable) googleCalendarWritable.value = String(Boolean(plugins.googleCalendar?.writable));
+    if (slackEnabled) slackEnabled.value = String(Boolean(plugins.slack?.enabled));
+    if (stripeEnabled) stripeEnabled.value = String(Boolean(plugins.stripe?.enabled));
+    if (webhookEnabled) webhookEnabled.value = String(Boolean(plugins.webhook?.enabled));
+    if (webhookUrl) webhookUrl.value = plugins.webhook?.url || "";
+  }
+  if (ui.worldContextForm) {
+    const world = dashboard.state.profile?.worldContext || {};
+    ["locationLabel", "weather", "newsSignal", "commuteMinutes", "sleepHours", "workMode"].forEach((name) => {
+      const field = ui.worldContextForm.elements.namedItem(name);
+      if (!field) return;
+      field.value = world[name] ?? (name === "workMode" ? "auto" : "");
+    });
+  }
+  if (ui.autopilotSettingsForm) {
+    const settings = dashboard.state.profile?.autopilot || {};
+    ["enabled", "mode", "approvalMode", "maxDailyDeepTasks"].forEach((name) => {
+      const field = ui.autopilotSettingsForm.elements.namedItem(name);
+      if (!field) return;
+      if (name === "enabled") field.value = String(Boolean(settings.enabled));
+      else field.value = settings[name] ?? "";
+    });
+  }
+  if (ui.privacySettingsForm) {
+    const privacy = dashboard.state.profile?.privacy || {};
+    ["dataSharing", "localFirst", "offlinePreferred"].forEach((name) => {
+      const field = ui.privacySettingsForm.elements.namedItem(name);
+      if (!field) return;
+      if (typeof privacy[name] === "boolean") field.value = String(Boolean(privacy[name]));
+      else field.value = privacy[name] ?? "";
+    });
   }
   const notionCfg = dashboard.state.profile?.integrations?.notion;
   if (notionCfg?.enabled && notionCfg?.token) {
@@ -501,13 +1191,16 @@ function renderDashboard(dashboard) {
   setHtml(ui.topMetrics, [
     `Open ${dashboard.stats.openTasks}`,
     `Projects ${dashboard.stats.projectCount}`,
-    `Vault ${dashboard.stats.knowledgeCount}`,
+    `Team ${dashboard.stats.teamCount}`,
+    `Queued ${dashboard.autonomy?.executions?.filter((item) => item.status !== "completed" && item.status !== "cancelled")?.length || 0}`,
+    `Autopilot ${dashboard.meta?.autopilot?.ready ? "active" : "preview"}`,
     `Mode ${dashboard.advanced.behaviorModel.operatingMode}`
   ].map((item) => `<span class="metric-pill">${escapeHtml(item)}</span>`).join(""));
   setHtml(ui.statsGrid, [
     ["Open tasks", dashboard.stats.openTasks],
     ["Completed", dashboard.stats.completedTasks],
     ["Goals", dashboard.stats.goalCount],
+    ["Team", dashboard.stats.teamCount],
     ["Workflows", dashboard.stats.workflowCount]
   ].map(([label, value]) => `<div class="stat-card"><div class="stat-label">${escapeHtml(label)}</div><div class="stat-value">${escapeHtml(value)}</div></div>`).join(""));
   setHtml(ui.dailyPlan, (dashboard.dailyPlan || []).length ? dashboard.dailyPlan.map((item) => `<li><strong>${escapeHtml(item.title)}</strong> - ${escapeHtml(item.durationMins)} mins</li>`).join("") : `<li class="empty-state">Add tasks and Buksy will shape the day here.</li>`);
@@ -539,6 +1232,7 @@ function renderDashboard(dashboard) {
         <p class="note-copy">Buksy respects carry-forward dates and your latest check-in. Open <strong>Schedule</strong> for the full view.</p>
       `
       );
+      ui.schedulePreviewCard.innerHTML = normalizeUiText(ui.schedulePreviewCard.innerHTML).replaceAll(" - -", " - No tasks");
     } else {
       setHtml(ui.schedulePreviewCard, `<p class="empty-state">Schedule preview will appear when you have open tasks.</p>`);
     }
@@ -563,7 +1257,7 @@ function renderDashboard(dashboard) {
     </div>
   ` : `<p class="empty-state">Add a task, project, or goal and Buksy will choose the smartest next move here.</p>`;
   setHtml(ui.suggestionCard, suggestion);
-  setHtml(ui.dailyBriefCard, dailyBriefHtml(dashboard));
+  setHtml(ui.dailyBriefCard, normalizeUiText(dailyBriefHtml(dashboard)));
   setHtml(ui.assistantActionCard, latestAssistantAction(dashboard));
 
   setHtml(ui.predictiveDayCard, objectHtml(dashboard.advanced.predictiveDay || {}));
@@ -581,6 +1275,27 @@ function renderDashboard(dashboard) {
   setHtml(ui.learningInsights, (dashboard.learningInsights || []).length ? dashboard.learningInsights.map((item) => `<li>${escapeHtml(item)}</li>`).join("") : `<li>Buksy is still learning your preferences.</li>`);
   setHtml(ui.workspaceOpportunityCard, listHtml([...(dashboard.workspace.opportunityScanner || []), ...(dashboard.advanced.opportunities || []).map((item) => item.message)], "Buksy is scanning for opportunities across your work."));
   setHtml(ui.workspaceSurpriseCard, listHtml([...(dashboard.workspace.surpriseInsights || []), ...(dashboard.workspace.hiddenInsights || [])], "Surprise insights will appear as Buksy sees more patterns."));
+  setHtml(ui.analyticsSummary, analyticsSummaryHtml(dashboard.analytics || {}));
+  setHtml(ui.analyticsWeeklyCard, listHtml(dashboard.analytics?.weekly?.report || [], "Buksy is still collecting enough data for a weekly report."));
+  setHtml(ui.analyticsPerformanceCard, performanceHtml(dashboard.analytics?.performance || {}));
+  setHtml(ui.analyticsBurnoutCard, burnoutHtml(dashboard.analytics?.burnout || {}));
+  setHtml(ui.analyticsGoalProbabilityCard, goalProbabilityHtml(dashboard.analytics?.goals || []));
+  setHtml(ui.analyticsAvoidanceCard, avoidanceHtml(dashboard.analytics?.avoidance || []));
+  setHtml(ui.analyticsPersonalizationCard, personalizationHtml(dashboard.analytics?.personalization || {}));
+  setHtml(ui.analyticsUsageCard, usageHtml(dashboard.analytics?.usage || {}));
+  setHtml(ui.digitalTwinCard, digitalTwinHtml(dashboard.meta?.digitalTwin || {}));
+  setHtml(ui.futureTimelineCard, futureTimelineHtml(dashboard.meta?.futureTimelines || {}));
+  setHtml(ui.habitDnaCard, habitDnaHtml(dashboard.meta?.habitDna || {}));
+  setHtml(ui.emotionalIntelligenceCard, emotionalIntelligenceHtml(dashboard.meta?.emotionalIntelligence || {}));
+  setHtml(ui.playbooksCard, playbooksHtml(dashboard.meta?.playbooks || {}));
+  setHtml(ui.strategyEngineCard, strategyHtml(dashboard.meta?.strategyEngine || {}));
+  setHtml(ui.subconsciousPatternsCard, subconsciousHtml(dashboard.meta?.subconsciousPatterns || {}));
+  setHtml(ui.gamificationCard, gamificationHtml(dashboard.meta?.gamification || {}));
+  setHtml(ui.privacyModeCard, privacyHtml(dashboard.meta?.privacyMode || {}));
+  setHtml(ui.teamBrainCard, teamBrainHtml(dashboard.meta?.teamBrain || {}));
+  setHtml(ui.contextEngineCard, contextEngineHtml(dashboard.meta?.contextEngine || {}));
+  setHtml(ui.metaLearningCard, metaLearningHtml(dashboard.meta?.metaLearning || {}));
+  setHtml(ui.autopilotAnalyticsCard, autopilotHtml(dashboard.meta?.autopilot || {}));
 
   const openTasks = (dashboard.state.tasks || []).filter((task) => task.status === "open");
   const doneTasks = (dashboard.state.tasks || []).filter((task) => task.status === "completed").slice(0, 10);
@@ -589,13 +1304,36 @@ function renderDashboard(dashboard) {
   setHtml(ui.projectCards, (dashboard.workspace.projectSnapshots || []).length ? dashboard.workspace.projectSnapshots.map((project) => `<article class="mini-card project-snapshot"><div class="task-card-header"><div><h4>${escapeHtml(project.name)}</h4><p class="note-copy">${escapeHtml(project.description || "No description yet.")}</p></div><span class="status-chip">${escapeHtml(project.status)}</span></div><div class="pill-row"><span class="pill">${escapeHtml(project.counts.openTasks)} open tasks</span><span class="pill">${escapeHtml(project.counts.goals)} goals</span><span class="pill">${escapeHtml(project.counts.knowledge)} vault items</span><span class="pill">${escapeHtml(project.counts.artifacts)} artifacts</span></div></article>`).join("") : `<p class="empty-state">Create a project and Buksy will keep its memory separate here.</p>`);
   setHtml(ui.goalCards, (dashboard.advanced.goals || []).length ? dashboard.advanced.goals.map((goal) => `<article class="goal-card"><div class="goal-card-header"><div><h4>${escapeHtml(goal.title)}</h4><p class="note-copy">${escapeHtml(goal.progressLabel || "No linked tasks yet.")}</p></div><span class="status-chip">${escapeHtml(goal.status)}</span></div><div class="meta-row"><span class="pill">${escapeHtml(goal.theme)}</span><span class="pill">${escapeHtml(formatDate(goal.targetDate))}</span></div>${listHtml((goal.weeklyRoadmap || []).map((step) => `${step.label} - ${step.focus}: ${(step.moves || []).join(", ")}`), "No roadmap yet.")}</article>`).join("") : `<p class="empty-state">No goals yet. Build one and Buksy will reverse-plan it here.</p>`);
   setHtml(ui.trendWatchCard, objectHtml(dashboard.workspace.trendWatch || {}));
-  setHtml(ui.memoryGraphCard, objectHtml(dashboard.advanced.memoryGraph || {}));
+  setHtml(ui.memoryGraphCard, memoryGraphHtml(dashboard.advanced.memoryGraph || {}));
   setHtml(ui.artifactStream, (dashboard.state.artifacts || []).slice(0, 10).map((artifact) => `<div class="mini-card dense-card"><div class="task-card-header"><div><strong>${escapeHtml(artifact.title)}</strong><p class="note-copy">${escapeHtml(artifact.category || artifact.kind)}</p></div><span class="status-chip">${escapeHtml(artifact.kind)}</span></div><p class="note-copy">${escapeHtml(formatDate(artifact.createdAt, true))}</p></div>`).join("") || `<p class="empty-state">Generated briefs, simulations, and other artifacts will collect here.</p>`);
+  setHtml(ui.pluginCatalog, pluginCatalogHtml(dashboard.autonomy?.plugins || []));
+  setHtml(ui.executionQueue, executionQueueHtml(dashboard.autonomy?.executions || []));
+  setHtml(ui.automationSuggestions, automationSuggestionsHtml(dashboard.autonomy?.automationSuggestions || []));
+  setHtml(
+    ui.automationWorkflowList,
+    automationWorkflowHtml(
+      (dashboard.state.workflows || []).filter((workflow) =>
+        workflow.type === "automation" || ["task_overdue", "low_energy", "developer_pr"].includes(String(workflow.trigger || "").trim().toLowerCase())
+      )
+    )
+  );
 
   Object.entries(artifactTargets).forEach(([kind, target]) => {
     setHtml(ui[target], latestPayload(kind) ? artifactHtml(kind, latestPayload(kind)) : `<p class="empty-state">No result here yet.</p>`);
   });
   setHtml(ui.workflowResult, state.workflowBlueprint ? objectHtml(state.workflowBlueprint) : state.dashboard?.state?.workflows?.[0] ? objectHtml(state.dashboard.state.workflows[0]) : `<p class="empty-state">Built workflows will appear here.</p>`);
+  setHtml(ui.executionPlannerResult, executionPreviewHtml(state.latestExecution || dashboard.autonomy?.executions?.[0]));
+  setHtml(ui.automationBuildResult, state.automationDraft ? objectHtml(state.automationDraft) : `<p class="empty-state">Create an automation and Buksy will show the trigger and safeguard details here.</p>`);
+  setHtml(ui.delayExplainResult, state.delayAnalysis ? objectHtml(state.delayAnalysis) : `<p class="empty-state">Ask Buksy why something is delayed and it will break down the likely reasons here.</p>`);
+  setHtml(ui.timeSimulationResult, state.timeSimulation ? timeSimulationHtml(state.timeSimulation) : timeSimulationHtml(latestPayload("time-simulation")));
+  setHtml(ui.digitalTwinSimulationResult, state.twinSimulation ? objectHtml(state.twinSimulation) : latestPayload("digital-twin-simulation") ? artifactHtml("digital-twin-simulation", latestPayload("digital-twin-simulation")) : `<p class="empty-state">Run a digital twin simulation to see how Buksy expects you to respond.</p>`);
+  setHtml(ui.voiceJournalResult, state.voiceJournal ? objectHtml(state.voiceJournal) : latestPayload("voice-journal") ? artifactHtml("voice-journal", latestPayload("voice-journal")) : `<p class="empty-state">Voice summaries, extracted tasks, and reflection insights will show here.</p>`);
+  setHtml(ui.worldContextResult, state.worldContext ? objectHtml(state.worldContext) : objectHtml(dashboard.meta?.contextEngine || {}));
+  setHtml(ui.autopilotResult, state.autopilotRun ? objectHtml(state.autopilotRun) : latestPayload("autopilot-run") ? artifactHtml("autopilot-run", latestPayload("autopilot-run")) : autopilotHtml(dashboard.meta?.autopilot || {}));
+  setHtml(ui.goalAutoplanResult, state.goalAutoplan ? objectHtml(state.goalAutoplan) : latestPayload("autonomous-goal-plan") ? artifactHtml("autonomous-goal-plan", latestPayload("autonomous-goal-plan")) : `<p class="empty-state">Run a full AI goal plan and Buksy will show the roadmap, tasks, and mitigation here.</p>`);
+  setHtml(ui.teamResult, state.teamUpdate ? objectHtml(state.teamUpdate) : objectHtml(dashboard.meta?.teamBrain || {}));
+  setHtml(ui.pluginSettingsResult, state.pluginUpdate ? objectHtml(state.pluginUpdate) : `<p class="empty-state">Plugin settings will be reflected here after you save them.</p>`);
+  setHtml(ui.developerImportResult, state.developerImport ? objectHtml(state.developerImport) : latestPayload("developer-sync") ? artifactHtml("developer-sync", latestPayload("developer-sync")) : `<p class="empty-state">Developer mode imports PR pressure into tasks and shows the result here.</p>`);
   const vaultItems = state.knowledgeQuery?.items || (dashboard.state.knowledge || []).slice(0, 8);
   setHtml(ui.knowledgeResults, vaultItems.length ? vaultItems.map((item) => `<div class="mini-card dense-card"><div class="task-card-header"><div><strong>${escapeHtml(item.title || "Untitled")}</strong><p class="note-copy">${escapeHtml(String(item.content || "").slice(0, 180))}${String(item.content || "").length > 180 ? "..." : ""}</p></div><span class="status-chip">${escapeHtml(item.category || item.type || "item")}</span></div><p class="note-copy">${escapeHtml(formatDate(item.createdAt, true))}</p></div>`).join("") : `<p class="empty-state">The vault is empty. Save notes, research, or files to start building memory.</p>`);
 }
@@ -715,6 +1453,313 @@ bindJsonForm("sandboxForm", "/api/sandbox", "Sandbox finished.");
 bindJsonForm("knowledgeForm", "/api/knowledge/add", "Saved to the vault.");
 bindJsonForm("knowledgeQueryForm", "/api/knowledge/query", "");
 
+ui.executionPlanForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  try {
+    const payload = formObject(ui.executionPlanForm);
+    if (!payload.actionType) delete payload.actionType;
+    const response = await api("/api/actions/plan", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+    state.latestExecution = response.execution;
+    flash("Action planned. Review it in the execution queue.");
+    await refreshDashboard();
+  } catch (error) {
+    flash(error.message);
+  }
+});
+
+ui.automationBuildForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  try {
+    const payload = formObject(ui.automationBuildForm);
+    const response = await api("/api/automations/build", {
+      method: "POST",
+      body: JSON.stringify({
+        ...payload,
+        enabled: payload.enabled === "true"
+      })
+    });
+    state.automationDraft = response.result;
+    flash("Automation created.");
+    await refreshDashboard();
+  } catch (error) {
+    flash(error.message);
+  }
+});
+
+ui.runAutomationsBtn?.addEventListener("click", async () => {
+  try {
+    const response = await api("/api/automations/run", {
+      method: "POST",
+      body: JSON.stringify({})
+    });
+    state.automationDraft = response;
+    flash("Buksy ran the active automation rules.");
+    await refreshDashboard();
+  } catch (error) {
+    flash(error.message);
+  }
+});
+
+ui.autopilotSettingsForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  try {
+    const payload = formObject(ui.autopilotSettingsForm);
+    const response = await api("/api/autopilot/settings", {
+      method: "POST",
+      body: JSON.stringify({
+        ...payload,
+        enabled: payload.enabled === "true",
+        maxDailyDeepTasks: Number(payload.maxDailyDeepTasks || 3)
+      })
+    });
+    state.autopilotRun = response.autopilot;
+    flash("Autopilot settings saved.");
+    await refreshDashboard();
+  } catch (error) {
+    flash(error.message);
+  }
+});
+
+ui.runAutopilotBtn?.addEventListener("click", async () => {
+  try {
+    const response = await api("/api/autopilot/run", {
+      method: "POST",
+      body: JSON.stringify({})
+    });
+    state.autopilotRun = {
+      ...response.result,
+      adjustedTasks: response.adjustedTasks || [],
+      createdExecutions: response.createdExecutions || []
+    };
+    flash("Buksy ran life autopilot.");
+    await refreshDashboard();
+  } catch (error) {
+    flash(error.message);
+  }
+});
+
+ui.worldContextForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  try {
+    const payload = formObject(ui.worldContextForm);
+    const response = await api("/api/world-context", {
+      method: "POST",
+      body: JSON.stringify({
+        ...payload,
+        commuteMinutes: Number(payload.commuteMinutes || 0),
+        sleepHours: Number(payload.sleepHours || 0)
+      })
+    });
+    state.worldContext = response.contextEngine;
+    flash("Outside-world context updated.");
+    await refreshDashboard();
+  } catch (error) {
+    flash(error.message);
+  }
+});
+
+ui.teamMemberForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  try {
+    const payload = formObject(ui.teamMemberForm);
+    const response = await api("/api/team/members", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+    state.teamUpdate = {
+      member: response.member,
+      teamBrain: response.teamBrain
+    };
+    flash("Teammate added.");
+    ui.teamMemberForm.reset();
+    const availability = ui.teamMemberForm.elements.namedItem("availability");
+    if (availability) availability.value = "full";
+    await refreshDashboard();
+  } catch (error) {
+    flash(error.message);
+  }
+});
+
+ui.goalAutoplanForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  try {
+    const payload = formObject(ui.goalAutoplanForm);
+    const response = await api("/api/goals/autoplan", {
+      method: "POST",
+      body: JSON.stringify({
+        ...payload,
+        targetDays: Number(payload.targetDays || 30)
+      })
+    });
+    state.goalAutoplan = {
+      result: response.result,
+      goal: response.goal,
+      tasks: response.tasks
+    };
+    flash("Autonomous goal plan created.");
+    await refreshDashboard();
+  } catch (error) {
+    flash(error.message);
+  }
+});
+
+ui.digitalTwinSimulationForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  try {
+    const payload = formObject(ui.digitalTwinSimulationForm);
+    const response = await api("/api/twin/simulate", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+    state.twinSimulation = response.result;
+    flash("Digital twin simulation ready.");
+    if (state.dashboard) renderDashboard(state.dashboard);
+  } catch (error) {
+    flash(error.message);
+  }
+});
+
+ui.privacySettingsForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  try {
+    const payload = formObject(ui.privacySettingsForm);
+    const response = await api("/api/privacy/settings", {
+      method: "POST",
+      body: JSON.stringify({
+        ...payload,
+        localFirst: payload.localFirst === "true",
+        offlinePreferred: payload.offlinePreferred === "true"
+      })
+    });
+    state.privacyUpdate = response.privacyMode;
+    flash("Privacy mode updated.");
+    await refreshDashboard();
+  } catch (error) {
+    flash(error.message);
+  }
+});
+
+ui.timeSimulationForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  try {
+    const payload = formObject(ui.timeSimulationForm);
+    const response = await api("/api/time/simulate", {
+      method: "POST",
+      body: JSON.stringify({
+        ...payload,
+        dailyHours: Number(payload.dailyHours || 2),
+        includeWeekends: payload.includeWeekends === "true",
+        daysOff: String(payload.daysOff || "")
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean)
+      })
+    });
+    state.timeSimulation = response.result;
+    flash("Time simulation updated.");
+    await refreshDashboard();
+  } catch (error) {
+    flash(error.message);
+  }
+});
+
+ui.delayExplainForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  try {
+    const payload = formObject(ui.delayExplainForm);
+    const response = await api("/api/analytics/explain-delay", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+    state.delayAnalysis = response.analysis;
+    flash("Delay analysis ready.");
+    if (state.dashboard) renderDashboard(state.dashboard);
+  } catch (error) {
+    flash(error.message);
+  }
+});
+
+ui.pluginSettingsForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  try {
+    const payload = formObject(ui.pluginSettingsForm);
+    const current = state.dashboard?.state?.profile?.plugins || {};
+    const response = await api("/api/plugins", {
+      method: "POST",
+      body: JSON.stringify({
+        gmail: {
+          ...(current.gmail || {}),
+          enabled: true,
+          mode: payload.gmailMode || "draft_only"
+        },
+        googleCalendar: {
+          ...(current.googleCalendar || {}),
+          enabled: true,
+          writable: payload.googleCalendarWritable === "true"
+        },
+        slack: {
+          ...(current.slack || {}),
+          enabled: payload.slackEnabled === "true"
+        },
+        stripe: {
+          ...(current.stripe || {}),
+          enabled: payload.stripeEnabled === "true"
+        },
+        webhook: {
+          ...(current.webhook || {}),
+          enabled: payload.webhookEnabled === "true",
+          url: payload.webhookUrl || ""
+        }
+      })
+    });
+    state.pluginUpdate = response.config;
+    flash("Plugin settings saved.");
+    await refreshDashboard();
+  } catch (error) {
+    flash(error.message);
+  }
+});
+
+ui.voiceJournalForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  try {
+    const payload = formObject(ui.voiceJournalForm);
+    const response = await api("/api/voice/journal", {
+      method: "POST",
+      body: JSON.stringify({
+        ...payload,
+        createTasks: payload.createTasks === "true",
+        saveToKnowledge: payload.saveToKnowledge === "true"
+      })
+    });
+    state.voiceJournal = {
+      ...response.result,
+      createdTasks: response.createdTasks || []
+    };
+    flash("Voice journal processed.");
+    await refreshDashboard();
+  } catch (error) {
+    flash(error.message);
+  }
+});
+
+ui.developerImportBtn?.addEventListener("click", async () => {
+  try {
+    const response = await api("/api/developer/github/import", {
+      method: "POST",
+      body: JSON.stringify({})
+    });
+    state.developerImport = response;
+    flash(`Imported ${response.createdTasks?.length || 0} developer tasks.`);
+    await refreshDashboard();
+  } catch (error) {
+    flash(error.message);
+  }
+});
+
 ui.fileForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
   try {
@@ -777,8 +1822,6 @@ ui.refreshSuggestionBtn?.addEventListener("click", async () => {
   }
 });
 
-ui.navLinks.forEach((button) => button.addEventListener("click", () => view(button.dataset.viewTarget)));
-
 document.body.addEventListener("click", (event) => {
   const promptButton = event.target.closest("[data-chat-prompt]");
   if (!promptButton || !ui.chatInput) return;
@@ -840,6 +1883,98 @@ document.body.addEventListener("click", async (event) => {
   } catch (error) {
     flash(error.message);
   }
+});
+
+document.body.addEventListener("click", async (event) => {
+  const approveButton = event.target.closest("[data-execution-approve]");
+  const runButton = event.target.closest("[data-execution-run]");
+  const cancelButton = event.target.closest("[data-execution-cancel]");
+  try {
+    if (approveButton) {
+      const response = await api(`/api/executions/${approveButton.dataset.executionApprove}/approve`, {
+        method: "POST",
+        body: JSON.stringify({})
+      });
+      state.latestExecution = response.execution;
+      flash("Action approved.");
+      await refreshDashboard();
+      return;
+    }
+    if (runButton) {
+      const response = await api(`/api/executions/${runButton.dataset.executionRun}/run`, {
+        method: "POST",
+        body: JSON.stringify({})
+      });
+      state.latestExecution = response.execution;
+      flash(response.result?.summary || "Action executed.");
+      await refreshDashboard();
+      return;
+    }
+    if (cancelButton) {
+      const response = await api(`/api/executions/${cancelButton.dataset.executionCancel}/cancel`, {
+        method: "POST",
+        body: JSON.stringify({})
+      });
+      state.latestExecution = response.execution;
+      flash("Action cancelled.");
+      await refreshDashboard();
+    }
+  } catch (error) {
+    flash(error.message);
+  }
+});
+
+const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+let voiceRecognition = null;
+let voiceTranscriptBuffer = "";
+
+if (SpeechRecognitionCtor) {
+  voiceRecognition = new SpeechRecognitionCtor();
+  voiceRecognition.lang = "en-US";
+  voiceRecognition.continuous = true;
+  voiceRecognition.interimResults = true;
+
+  voiceRecognition.onstart = () => {
+    if (ui.voiceStatus) ui.voiceStatus.textContent = "Listening... speak naturally and Buksy will capture the transcript.";
+  };
+
+  voiceRecognition.onresult = (event) => {
+    let interim = "";
+    for (let index = event.resultIndex; index < event.results.length; index += 1) {
+      const result = event.results[index];
+      if (result.isFinal) {
+        voiceTranscriptBuffer += `${result[0].transcript.trim()} `;
+      } else {
+        interim += result[0].transcript;
+      }
+    }
+    if (ui.voiceTranscript) {
+      ui.voiceTranscript.value = `${voiceTranscriptBuffer}${interim}`.trim();
+    }
+  };
+
+  voiceRecognition.onerror = (event) => {
+    if (ui.voiceStatus) ui.voiceStatus.textContent = `Voice capture error: ${event.error}`;
+  };
+
+  voiceRecognition.onend = () => {
+    if (ui.voiceStatus) ui.voiceStatus.textContent = "Voice capture stopped. You can keep editing the transcript before processing it.";
+  };
+} else if (ui.voiceStatus) {
+  ui.voiceStatus.textContent = "This browser does not expose speech recognition, so paste your transcript manually.";
+}
+
+ui.voiceStartBtn?.addEventListener("click", () => {
+  if (!voiceRecognition) {
+    flash("Voice capture is not available in this browser.");
+    return;
+  }
+  voiceTranscriptBuffer = ui.voiceTranscript?.value ? `${ui.voiceTranscript.value.trim()} ` : "";
+  voiceRecognition.start();
+});
+
+ui.voiceStopBtn?.addEventListener("click", () => {
+  voiceRecognition?.stop();
 });
 
 ui.loginForm?.addEventListener("submit", async (event) => {
@@ -1283,7 +2418,6 @@ const patchedView = (name) => {
   if (name === "integrations") refreshGitHub().catch(() => {});
 };
 ui.navLinks.forEach((button) => {
-  button.removeEventListener("click", () => {});
   button.addEventListener("click", () => patchedView(button.dataset.viewTarget));
 });
 

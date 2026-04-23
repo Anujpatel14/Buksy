@@ -55,3 +55,6 @@
 {"id":"1775634097864-u8ihb5","createdAt":"2026-04-08T07:41:37.864Z","type":"task_created","taskId":"9a333c50-566b-4b36-993e-003bed53c089","projectId":null,"goalId":null,"payload":{"priority":"medium","effort":"medium","durationMins":25,"dueDate":null}}
 {"id":"1775634111971-6ynzgy","createdAt":"2026-04-08T07:41:51.971Z","type":"task_feedback","taskId":"9a333c50-566b-4b36-993e-003bed53c089","projectId":null,"goalId":null,"kind":"not_helpful"}
 {"id":"1775634116764-7tjwbe","createdAt":"2026-04-08T07:41:56.764Z","type":"task_completed","taskId":"9a333c50-566b-4b36-993e-003bed53c089","projectId":null,"goalId":null,"kind":"completed"}
+{"id":"1776926653027-81791m","createdAt":"2026-04-23T06:44:13.027Z","type":"user_checkin","payload":{"energy":"low","focus":"steady","mood":"tired"}}
+{"id":"1776926731689-vctuvc","createdAt":"2026-04-23T06:45:31.689Z","type":"user_checkin","payload":{"energy":"high","focus":"locked_in","mood":""}}
+{"id":"1776926746718-zjwhov","createdAt":"2026-04-23T06:45:46.718Z","type":"user_checkin","payload":{"energy":"low","focus":"locked_in","mood":"tired"}}
