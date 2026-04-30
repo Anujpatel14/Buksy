@@ -705,6 +705,55 @@
               <div id="executionQueue"></div>
             </article>
 
+            <article class="panel wide-panel spotlight-panel">
+              <div class="panel-header">
+                <div>
+                  <p class="panel-kicker">Voice command center</p>
+                  <h3>Speak to Buksy like a calm operating system</h3>
+                </div>
+              </div>
+              <p class="note-copy">
+                Voice commands go through a command planner, JSON validator, safety check, and then execution. Buksy will ask before anything destructive or heavily disruptive.
+              </p>
+              <div class="action-row compact-row">
+                <button id="voiceCommandStartBtn" class="soft-button" type="button">
+                  <i class="ph ph-microphone"></i> Start command
+                </button>
+                <button id="voiceCommandStopBtn" class="ghost-button" type="button">
+                  <i class="ph ph-stop"></i> Stop
+                </button>
+                <button id="voiceCommandConfirmBtn" class="primary-button hidden" type="button">
+                  <i class="ph ph-check"></i> Confirm action
+                </button>
+              </div>
+              <p id="voiceCommandStatus" class="note-copy">Voice command mode is ready when your browser supports speech recognition.</p>
+              <form id="voiceCommandForm" class="task-form">
+                <label class="wide">
+                  Command
+                  <textarea id="voiceCommandTranscript" name="text" rows="6" placeholder="Try: plan my day but focus on client work, or launch a SaaS in 30 days and break it down."></textarea>
+                </label>
+                <label>
+                  Auto speak reply
+                  <select id="voiceCommandSpeakMode" name="speakResponse">
+                    <option value="true" selected>Yes</option>
+                    <option value="false">No</option>
+                  </select>
+                </label>
+                <label>
+                  Auto execute safe actions
+                  <select name="execute">
+                    <option value="true" selected>Yes</option>
+                    <option value="false">Plan only</option>
+                  </select>
+                </label>
+                <button class="primary-button" type="submit">
+                  <i class="ph ph-waveform"></i> Run voice command
+                </button>
+              </form>
+              <div class="divider"></div>
+              <div id="voiceCommandResult"></div>
+            </article>
+
             <article class="panel">
               <div class="panel-header">
                 <div>

@@ -64,6 +64,58 @@ const ROUTE_SCHEMA = {
   }
 };
 
+const SUPPORTED_VOICE_ACTIONS = [
+  "create_task",
+  "update_task",
+  "delete_task",
+  "mark_done",
+  "schedule_task",
+  "reschedule_task",
+  "plan_day",
+  "rebalance_schedule",
+  "create_goal",
+  "update_goal",
+  "generate_doc",
+  "generate_todo_list",
+  "query_memory",
+  "analyze_project",
+  "run_workflow",
+  "suggest_next_step",
+  "simulate_outcome",
+  "decision_analysis"
+];
+
+const VOICE_PLAN_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["response", "actions", "requires_confirmation"],
+  properties: {
+    response: {
+      type: "string"
+    },
+    requires_confirmation: {
+      type: "boolean"
+    },
+    actions: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["type", "parameters"],
+        properties: {
+          type: {
+            type: "string",
+            enum: SUPPORTED_VOICE_ACTIONS
+          },
+          parameters: {
+            type: "object"
+          }
+        }
+      }
+    }
+  }
+};
+
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
@@ -298,12 +350,83 @@ async function generateBuddyReply(message, context, style, settings = {}) {
   return String(response?.message?.content || "").trim();
 }
 
+function normalizeVoicePlan(plan) {
+  if (!plan || typeof plan !== "object") {
+    return null;
+  }
+
+  const actions = Array.isArray(plan.actions)
+    ? plan.actions
+        .map((action) => ({
+          type: SUPPORTED_VOICE_ACTIONS.includes(String(action?.type || "").trim())
+            ? String(action.type).trim()
+            : "",
+          parameters: action?.parameters && typeof action.parameters === "object" && !Array.isArray(action.parameters)
+            ? action.parameters
+            : {}
+        }))
+        .filter((action) => action.type)
+    : [];
+
+  return {
+    response: String(plan.response || "").trim(),
+    actions,
+    requires_confirmation: plan.requires_confirmation === true
+  };
+}
+
+async function planVoiceCommand(message, context, settings = {}) {
+  const prompts = [
+    "You are Buksy, a fully autonomous AI-powered Personal Operating System. " +
+      "You are voice-first, context-aware, and execution-focused. Return JSON only. " +
+      "Understand incomplete or conversational speech. Convert the user's request into short voice-friendly response text plus a list of actions. " +
+      "Break complex requests into multiple actions. Ask a short clarifying question in response and return no actions if the request is too vague. " +
+      "Use current tasks, goals, mood, energy, focus, recent conversation, and calendar context to prioritize. " +
+      "Prefer lighter work when energy is low. Prioritize urgency when deadlines are near. " +
+      "Set requires_confirmation true for deleting tasks, major rescheduling, or other irreversible actions.",
+    "Return valid JSON only. Do not include markdown or explanation outside the JSON object."
+  ];
+
+  for (let attempt = 0; attempt < prompts.length; attempt += 1) {
+    const response = await chatWithOllama({
+      settings,
+      temperature: 0.25,
+      format: VOICE_PLAN_SCHEMA,
+      messages: [
+        {
+          role: "system",
+          content: prompts[attempt]
+        },
+        {
+          role: "user",
+          content:
+            `Current context:\n${context}\n\n` +
+            `Supported actions:\n${SUPPORTED_VOICE_ACTIONS.join(", ")}\n\n` +
+            `Voice command:\n${message}`
+        }
+      ]
+    });
+
+    const parsed = normalizeVoicePlan(safeJsonParse(response?.message?.content || ""));
+    if (parsed && (parsed.response || parsed.actions.length > 0)) {
+      return {
+        ...parsed,
+        response: parsed.response || "I understood the command."
+      };
+    }
+  }
+
+  return null;
+}
+
 module.exports = {
   DEFAULT_BASE_URL,
   DEFAULT_MODEL,
+  SUPPORTED_VOICE_ACTIONS,
   createDefaultOllamaSettings,
   normalizeOllamaSettings,
   getOllamaStatus,
   planChatAction,
-  generateBuddyReply
+  generateBuddyReply,
+  planVoiceCommand
 };

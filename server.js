@@ -10,6 +10,7 @@ const {
   updateTask,
   deleteTask,
   addGoal,
+  updateGoal,
   addProject,
   addKnowledgeItem,
   addWorkflow,
@@ -99,6 +100,7 @@ const {
   buildAutonomousGoalPlan
 } = require("./src/meta");
 const { handleChat, buildRuntimeContext } = require("./src/assistant");
+const { handleVoiceCommand } = require("./src/voice");
 const { getOllamaStatus } = require("./src/ollama");
 const {
   getMlMetrics,
@@ -723,6 +725,14 @@ async function handleApi(req, res, url) {
       return;
     }
 
+    if (req.method === "PATCH" && pathname.startsWith("/api/goals/")) {
+      const goalId = pathname.replace("/api/goals/", "");
+      const body = await readBody(req);
+      const goal = await updateGoal(goalId, body);
+      sendJson(res, 200, { goal });
+      return;
+    }
+
     if (req.method === "POST" && pathname === "/api/goals/autoplan") {
       const body = await readBody(req);
       const state = await readState();
@@ -1237,6 +1247,18 @@ async function handleApi(req, res, url) {
       }
 
       sendJson(res, 200, { result: payload, artifact, createdTasks });
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/voice/command") {
+      const body = await readBody(req);
+      const state = await readState();
+      const { calendar } = await resolveCalendarAndContext(state);
+      const result = await handleVoiceCommand(body, {
+        calendar,
+        now: new Date().toISOString()
+      });
+      sendJson(res, 200, result);
       return;
     }
 

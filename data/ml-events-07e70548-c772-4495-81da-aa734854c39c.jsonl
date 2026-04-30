@@ -58,3 +58,15 @@
 {"id":"1776926653027-81791m","createdAt":"2026-04-23T06:44:13.027Z","type":"user_checkin","payload":{"energy":"low","focus":"steady","mood":"tired"}}
 {"id":"1776926731689-vctuvc","createdAt":"2026-04-23T06:45:31.689Z","type":"user_checkin","payload":{"energy":"high","focus":"locked_in","mood":""}}
 {"id":"1776926746718-zjwhov","createdAt":"2026-04-23T06:45:46.718Z","type":"user_checkin","payload":{"energy":"low","focus":"locked_in","mood":"tired"}}
+{"id":"1776949396503-nvg9dg","createdAt":"2026-04-23T13:03:16.503Z","type":"chat_message","text":"[voice] plan my day for stockery project"}
+{"id":"1776949420244-3viqhu","createdAt":"2026-04-23T13:03:40.244Z","type":"chat_message","text":"[voice] plan my day for stockery project"}
+{"id":"1776949439582-2d1k8j","createdAt":"2026-04-23T13:03:59.582Z","type":"task_completed","taskId":"8339cb54-d588-4553-b203-61781fedd8b2","projectId":"7adb6dbf-aabd-4aae-bcf4-8b42a7a77c20","goalId":"41dab8a4-4d4b-4de1-82d3-fcdd4d52217a","kind":"completed"}
+{"id":"1776949443237-xhpbe1","createdAt":"2026-04-23T13:04:03.237Z","type":"task_completed","taskId":"8339cb54-d588-4553-b203-61781fedd8b2","projectId":"7adb6dbf-aabd-4aae-bcf4-8b42a7a77c20","goalId":"41dab8a4-4d4b-4de1-82d3-fcdd4d52217a","kind":"completed"}
+{"id":"1776949453405-0ai65h","createdAt":"2026-04-23T13:04:13.405Z","type":"user_checkin","payload":{"energy":"low","focus":"steady","mood":""}}
+{"id":"1776949516820-c1rnso","createdAt":"2026-04-23T13:05:16.820Z","type":"task_skipped","taskId":"561c798e-6eda-40e6-84ca-d3cb90475271","projectId":"7adb6dbf-aabd-4aae-bcf4-8b42a7a77c20","goalId":"41dab8a4-4d4b-4de1-82d3-fcdd4d52217a","kind":"skipped"}
+{"id":"1776949518476-h1a0a5","createdAt":"2026-04-23T13:05:18.476Z","type":"task_skipped","taskId":"561c798e-6eda-40e6-84ca-d3cb90475271","projectId":"7adb6dbf-aabd-4aae-bcf4-8b42a7a77c20","goalId":"41dab8a4-4d4b-4de1-82d3-fcdd4d52217a","kind":"skipped"}
+{"id":"1776949518685-ypbujt","createdAt":"2026-04-23T13:05:18.685Z","type":"task_skipped","taskId":"561c798e-6eda-40e6-84ca-d3cb90475271","projectId":"7adb6dbf-aabd-4aae-bcf4-8b42a7a77c20","goalId":"41dab8a4-4d4b-4de1-82d3-fcdd4d52217a","kind":"skipped"}
+{"id":"1776949519052-y14wij","createdAt":"2026-04-23T13:05:19.052Z","type":"task_skipped","taskId":"561c798e-6eda-40e6-84ca-d3cb90475271","projectId":"7adb6dbf-aabd-4aae-bcf4-8b42a7a77c20","goalId":"41dab8a4-4d4b-4de1-82d3-fcdd4d52217a","kind":"skipped"}
+{"id":"1776949519982-i5a8ff","createdAt":"2026-04-23T13:05:19.982Z","type":"task_completed","taskId":"561c798e-6eda-40e6-84ca-d3cb90475271","projectId":"7adb6dbf-aabd-4aae-bcf4-8b42a7a77c20","goalId":"41dab8a4-4d4b-4de1-82d3-fcdd4d52217a","kind":"completed"}
+{"id":"1776949521091-xzxqrk","createdAt":"2026-04-23T13:05:21.091Z","type":"task_completed","taskId":"3112929f-43dc-4aab-bc34-4e217cd4e75e","projectId":"7adb6dbf-aabd-4aae-bcf4-8b42a7a77c20","goalId":"41dab8a4-4d4b-4de1-82d3-fcdd4d52217a","kind":"completed"}
+{"id":"1776949525751-6kmcqz","createdAt":"2026-04-23T13:05:25.751Z","type":"user_checkin","payload":{"energy":"medium","focus":"steady","mood":""}}

@@ -39,6 +39,7 @@ Without extra configuration, data is stored in `data/buksy-data.json` and no log
 - **Life analytics dashboard** with performance windows, avoidance patterns, burnout radar, goal success probabilities, local usage/credit scaffolding, and delay diagnosis.
 - **Automation rules** for overdue tasks, low-energy recovery mode, and developer PR pressure.
 - **Voice journal** that turns spoken or pasted notes into summaries, decisions, tasks, and memory items.
+- **Voice command center** that uses browser speech recognition for capture, Ollama for strict JSON planning, safe auto-execution for low-risk actions, confirmation gates for risky actions, and browser speech synthesis for spoken replies.
 - **Goals** with autonomous decomposition, reverse planning, risk mitigation, roadmaps, linked tasks, and daily-hours estimates.
 - **Time simulation** to project finish dates, slips, and what must happen this week.
 - **Constraint solver** for fitting work into a time window.
@@ -102,6 +103,23 @@ With MySQL:
 
 Buksy works without Ollama; routing and templates still operate with built-in logic.
 
+## Voice mode
+
+- **Input:** Browser Web Speech API for quick command capture in supported browsers.
+- **Planning:** Ollama turns spoken language into strict JSON actions with a validation and retry layer.
+- **Execution:** Buksy runs safe actions automatically, but asks for confirmation before deletes or major rescheduling.
+- **Output:** Browser `SpeechSynthesis` can read Buksy's reply aloud after each command.
+- **Best local model:** `qwen3` by default in this repo, with `qwen2.5:3b` for speed or `qwen2.5:7b` for stronger planning if you want to switch in Ollama.
+
+Example voice commands:
+
+- `plan my day but focus on client work`
+- `add prepare invoice tomorrow`
+- `delete the draft proposal task`
+- `launch my saas in 30 days and break it down`
+- `what should I do next?`
+- `will I actually complete this plan?`
+
 ## Integrations (quick reference)
 
 - **Jira Cloud:** base URL, email, API token, board ID -> connect and sync issues into tasks (deduped by issue key).
@@ -151,6 +169,7 @@ npm test
 | `src/engine.js` | Task scoring, daily plan, deferral hints, adaptive capacity. |
 | `src/scheduler.js` | Multi-project schedule, carry-forward semantics. |
 | `src/assistant.js` | Chat, `buildRuntimeContext`, Ollama wiring. |
+| `src/voice.js` | Voice command planning, JSON validation, safe execution, and confirmation flow. |
 | `src/meta.js` | Digital twin, future timelines, team brain, autopilot, strategy, and meta-learning layer. |
 | `src/analytics.js` | Life analytics, burnout, delay analysis, and time simulation. |
 | `src/autonomy.js` | Plugin catalog, execution planning, automation rules, and action execution. |

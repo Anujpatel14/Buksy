@@ -4,7 +4,8 @@ const http = require("node:http");
 const {
   getOllamaStatus,
   planChatAction,
-  generateBuddyReply
+  generateBuddyReply,
+  planVoiceCommand
 } = require("../src/ollama");
 
 function startFakeOllama(handler) {
@@ -117,6 +118,48 @@ test("planChatAction and generateBuddyReply parse chat responses from Ollama", a
       model: "qwen3"
     });
     assert.match(reply, /launch checklist/i);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test("planVoiceCommand parses strict JSON action plans from Ollama", async () => {
+  const { server, baseUrl } = await startFakeOllama(async (req, res) => {
+    if (req.url !== "/api/chat" || req.method !== "POST") {
+      res.writeHead(404, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Not found" }));
+      return;
+    }
+
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({
+      message: {
+        content: JSON.stringify({
+          response: "I will plan your day around client work.",
+          requires_confirmation: false,
+          actions: [
+            {
+              type: "plan_day",
+              parameters: {
+                focus: "client work",
+                preferLightWork: false
+              }
+            }
+          ]
+        })
+      }
+    }));
+  });
+
+  try {
+    const plan = await planVoiceCommand(
+      "plan my day and focus on client work",
+      "Energy: medium\nFocus: steady",
+      { baseUrl, model: "qwen3" }
+    );
+    assert.equal(plan.response, "I will plan your day around client work.");
+    assert.equal(plan.actions[0].type, "plan_day");
+    assert.equal(plan.actions[0].parameters.focus, "client work");
   } finally {
     await closeServer(server);
   }

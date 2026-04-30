@@ -1027,6 +1027,47 @@ async function addGoal(input = {}) {
   });
 }
 
+async function updateGoal(id, patch = {}) {
+  return mutateState((state) => {
+    const goal = findGoalById(state, id);
+    const previousProjectId = goal.projectId;
+
+    if (typeof patch.title === "string") goal.title = patch.title.trim();
+    if (typeof patch.objective === "string") goal.objective = patch.objective.trim();
+    if (typeof patch.theme === "string" && patch.theme.trim()) goal.theme = patch.theme.trim();
+    if (patch.targetDate !== undefined) goal.targetDate = patch.targetDate || null;
+    if (patch.targetDays !== undefined) {
+      goal.targetDays = Number.isFinite(Number(patch.targetDays)) ? Math.round(Number(patch.targetDays)) : null;
+    }
+    if (Array.isArray(patch.roadmap)) goal.roadmap = patch.roadmap;
+    if (Array.isArray(patch.weeklyRoadmap)) goal.weeklyRoadmap = patch.weeklyRoadmap;
+    if (patch.dependencies !== undefined) goal.dependencies = asArray(patch.dependencies);
+    if (patch.hiddenRisks !== undefined) goal.hiddenRisks = asArray(patch.hiddenRisks);
+    if (patch.priorityPath !== undefined) goal.priorityPath = asArray(patch.priorityPath);
+    if (patch.todayMoves !== undefined) goal.todayMoves = asArray(patch.todayMoves);
+    if (patch.linkedTaskIds !== undefined) goal.linkedTaskIds = asArray(patch.linkedTaskIds);
+    if (patch.people !== undefined) goal.people = asArray(patch.people);
+    if (typeof patch.status === "string" && patch.status.trim()) goal.status = patch.status.trim();
+    if (patch.projectId !== undefined) {
+      goal.projectId = patch.projectId || null;
+      if (goal.projectId) {
+        findProjectById(state, goal.projectId);
+      }
+    }
+
+    goal.updatedAt = new Date().toISOString();
+    logActivityEntry(state, {
+      type: "goal_updated",
+      goalId: goal.id,
+      projectId: goal.projectId
+    });
+    touchProject(state, previousProjectId);
+    touchProject(state, goal.projectId);
+    refreshGoalProgress(state, goal.id);
+    return goal;
+  });
+}
+
 async function addProject(input = {}) {
   return mutateState((state) => {
     const project = cleanProjectInput(input);
@@ -1605,6 +1646,7 @@ module.exports = {
   updateTask,
   deleteTask,
   addGoal,
+  updateGoal,
   addProject,
   addKnowledgeItem,
   addWorkflow,

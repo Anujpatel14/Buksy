@@ -71,6 +71,8 @@ const ui = {
   "scheduleRebalanceBtn",
   "executionPlanForm", "executionPlannerResult", "executionQueue",
   "automationBuildForm", "automationBuildResult", "automationSuggestions", "automationWorkflowList", "runAutomationsBtn",
+  "voiceCommandForm", "voiceCommandResult", "voiceCommandStartBtn", "voiceCommandStopBtn", "voiceCommandStatus",
+  "voiceCommandTranscript", "voiceCommandConfirmBtn", "voiceCommandSpeakMode",
   "voiceJournalForm", "voiceJournalResult", "voiceStartBtn", "voiceStopBtn", "voiceStatus", "voiceTranscript",
   "analyticsSummary", "analyticsWeeklyCard", "analyticsPerformanceCard", "analyticsBurnoutCard",
   "analyticsGoalProbabilityCard", "analyticsAvoidanceCard", "analyticsPersonalizationCard", "analyticsUsageCard",
@@ -104,6 +106,7 @@ const state = {
   delayAnalysis: null,
   timeSimulation: null,
   twinSimulation: null,
+  voiceCommand: null,
   voiceJournal: null,
   worldContext: null,
   autopilotRun: null,
@@ -239,6 +242,37 @@ function objectHtml(value) {
       ${Array.isArray(inner) || typeof inner === "object" ? objectHtml(inner) : `<p class="note-copy">${escapeHtml(inner)}</p>`}
     </div>
   `).join("");
+}
+
+function voiceCommandHtml(result) {
+  if (!result) {
+    return `<p class="empty-state">Voice commands will show the spoken reply, planned actions, and execution result here.</p>`;
+  }
+
+  const actions = result.actions || [];
+  const executed = result.execution?.results || [];
+
+  return `
+    <div class="result-stack">
+      <div class="pill-row">
+        <span class="pill">${result.requires_confirmation ? "Confirmation needed" : "Safe to run"}</span>
+        <span class="pill">${escapeHtml(actions.length)} action${actions.length === 1 ? "" : "s"}</span>
+      </div>
+      <p class="result-copy">${escapeHtml(result.response || "")}</p>
+      ${actions.length ? `
+        <div class="mini-card dense-card">
+          <strong>Planned actions</strong>
+          ${listHtml(actions.map((action) => `${titleCase(action.type)}: ${Object.keys(action.parameters || {}).length ? JSON.stringify(action.parameters) : "no extra parameters"}`), "No actions planned.")}
+        </div>
+      ` : ""}
+      ${executed.length ? `
+        <div class="mini-card dense-card">
+          <strong>Execution</strong>
+          ${listHtml(executed.map((item) => item.summary || "Done"), "No execution output.")}
+        </div>
+      ` : ""}
+    </div>
+  `;
 }
 
 function documentHtml(document) {
@@ -1327,6 +1361,8 @@ function renderDashboard(dashboard) {
   setHtml(ui.delayExplainResult, state.delayAnalysis ? objectHtml(state.delayAnalysis) : `<p class="empty-state">Ask Buksy why something is delayed and it will break down the likely reasons here.</p>`);
   setHtml(ui.timeSimulationResult, state.timeSimulation ? timeSimulationHtml(state.timeSimulation) : timeSimulationHtml(latestPayload("time-simulation")));
   setHtml(ui.digitalTwinSimulationResult, state.twinSimulation ? objectHtml(state.twinSimulation) : latestPayload("digital-twin-simulation") ? artifactHtml("digital-twin-simulation", latestPayload("digital-twin-simulation")) : `<p class="empty-state">Run a digital twin simulation to see how Buksy expects you to respond.</p>`);
+  setHtml(ui.voiceCommandResult, voiceCommandHtml(state.voiceCommand));
+  ui.voiceCommandConfirmBtn?.classList.toggle("hidden", !(state.voiceCommand?.requires_confirmation));
   setHtml(ui.voiceJournalResult, state.voiceJournal ? objectHtml(state.voiceJournal) : latestPayload("voice-journal") ? artifactHtml("voice-journal", latestPayload("voice-journal")) : `<p class="empty-state">Voice summaries, extracted tasks, and reflection insights will show here.</p>`);
   setHtml(ui.worldContextResult, state.worldContext ? objectHtml(state.worldContext) : objectHtml(dashboard.meta?.contextEngine || {}));
   setHtml(ui.autopilotResult, state.autopilotRun ? objectHtml(state.autopilotRun) : latestPayload("autopilot-run") ? artifactHtml("autopilot-run", latestPayload("autopilot-run")) : autopilotHtml(dashboard.meta?.autopilot || {}));
@@ -1723,6 +1759,85 @@ ui.pluginSettingsForm?.addEventListener("submit", async (event) => {
   }
 });
 
+function shouldSpeakVoiceReply() {
+  return ui.voiceCommandSpeakMode?.value !== "false";
+}
+
+function speakOutLoud(text) {
+  if (!shouldSpeakVoiceReply() || !("speechSynthesis" in window) || !text) {
+    return;
+  }
+
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(String(text).trim());
+  utterance.rate = 1;
+  utterance.pitch = 1;
+  window.speechSynthesis.speak(utterance);
+}
+
+function isConfirmationPhrase(text) {
+  return /^(confirm|yes|do it|go ahead|proceed|yes do it)$/i.test(String(text || "").trim());
+}
+
+async function runVoiceCommand(options = {}) {
+  const confirmed = options.confirmed === true;
+  const payload = ui.voiceCommandForm ? formObject(ui.voiceCommandForm) : {};
+  const text = ui.voiceCommandTranscript?.value.trim() || "";
+  const body = options.plan
+    ? {
+        plan: options.plan,
+        confirmed: true,
+        execute: true
+      }
+    : {
+        text,
+        execute: payload.execute === "true"
+      };
+
+  if (!options.plan && !text) {
+    flash("Say something first so Buksy has a command to work with.");
+    return;
+  }
+
+  const response = await api("/api/voice/command", {
+    method: "POST",
+    body: JSON.stringify(body)
+  });
+  state.voiceCommand = response;
+  flash(response.requires_confirmation && !confirmed ? "Voice command needs confirmation." : "Voice command processed.");
+  await refreshDashboard();
+  if (response.response) {
+    speakOutLoud(response.response);
+  }
+}
+
+ui.voiceCommandForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  try {
+    const text = ui.voiceCommandTranscript?.value.trim() || "";
+    if (state.voiceCommand?.requires_confirmation && isConfirmationPhrase(text)) {
+      await runVoiceCommand({ confirmed: true, plan: state.voiceCommand });
+      if (ui.voiceCommandTranscript) ui.voiceCommandTranscript.value = "";
+      return;
+    }
+    await runVoiceCommand();
+  } catch (error) {
+    flash(error.message);
+  }
+});
+
+ui.voiceCommandConfirmBtn?.addEventListener("click", async () => {
+  try {
+    if (!state.voiceCommand?.requires_confirmation) {
+      flash("There is no pending voice action to confirm.");
+      return;
+    }
+    await runVoiceCommand({ confirmed: true, plan: state.voiceCommand });
+  } catch (error) {
+    flash(error.message);
+  }
+});
+
 ui.voiceJournalForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
   try {
@@ -1927,15 +2042,141 @@ document.body.addEventListener("click", async (event) => {
 const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
 let voiceRecognition = null;
 let voiceTranscriptBuffer = "";
+let voiceErrorMessage = "";
+let voiceIsListening = false;
+let activeVoiceTarget = {
+  input: null,
+  status: null,
+  startMessage: ""
+};
+
+function setVoiceStatus(text) {
+  if (activeVoiceTarget.status) {
+    activeVoiceTarget.status.textContent = text;
+  }
+}
+
+function humanVoiceError(errorCode, fallback = "") {
+  const code = String(errorCode || "").trim();
+  const normalized = code.toLowerCase().replace(/[^a-z]/g, "");
+
+  if (["notallowed", "notallowederror", "servicenotallowed", "permissiondeniederror"].includes(normalized)) {
+    return "Microphone permission was blocked. Allow mic access for this site, then try again.";
+  }
+  if (["audiocapture", "notfound", "notfounderror", "devicesnotfounderror"].includes(normalized)) {
+    return "Buksy could not find a microphone. Check that a mic is connected and enabled in Windows.";
+  }
+  if (["notreadable", "notreadableerror", "trackstarterror"].includes(normalized)) {
+    return "Buksy found the microphone, but another app may already be using it. Close apps like Zoom, Meet, or Discord and try again.";
+  }
+  if (normalized === "network") {
+    return "Voice recognition had a network/service issue. Try again in Chrome or Edge.";
+  }
+  if (["security", "securityerror"].includes(normalized)) {
+    return "The browser blocked microphone access for security reasons. Open Buksy on localhost or 127.0.0.1 in Chrome or Edge.";
+  }
+  if (["aborted", "aborterror"].includes(normalized)) {
+    return "Voice capture was interrupted before it could start listening.";
+  }
+  if (normalized === "nospeech") {
+    return "Buksy opened the mic but did not hear speech. Try again and start speaking right away.";
+  }
+  return fallback || (code ? `Voice capture error: ${code}` : "Buksy could not start voice capture.");
+}
+
+async function microphonePermissionState() {
+  try {
+    if (!navigator.permissions?.query) {
+      return "";
+    }
+    const result = await navigator.permissions.query({ name: "microphone" });
+    return String(result?.state || "");
+  } catch (error) {
+    return "";
+  }
+}
+
+async function ensureMicrophoneReady() {
+  if (!navigator.mediaDevices?.getUserMedia) {
+    return { ok: true, reason: "permission_api_unavailable" };
+  }
+
+  if (!window.isSecureContext) {
+    return {
+      ok: false,
+      message: "Microphone access needs a secure page. Open Buksy on localhost or HTTPS and try again."
+    };
+  }
+
+  const permissionState = await microphonePermissionState();
+  if (permissionState === "denied") {
+    return {
+      ok: false,
+      message: "Microphone permission is blocked in your browser settings. Allow mic access for this site, then reload Buksy."
+    };
+  }
+
+  let stream = null;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    return { ok: true };
+  } catch (error) {
+    return {
+      ok: false,
+      message: humanVoiceError(error?.name || error?.message, "Buksy could not get microphone permission.")
+    };
+  } finally {
+    stream?.getTracks?.().forEach((track) => track.stop());
+  }
+}
+
+async function beginVoiceCapture(inputNode, statusNode, startMessage) {
+  if (!voiceRecognition) {
+    const message = "Voice capture is not available in this browser. Try Chrome or Edge, or paste the transcript manually.";
+    if (statusNode) statusNode.textContent = message;
+    flash(message);
+    return;
+  }
+
+  activeVoiceTarget = {
+    input: inputNode,
+    status: statusNode,
+    startMessage
+  };
+  voiceErrorMessage = "";
+  voiceTranscriptBuffer = inputNode?.value ? `${inputNode.value.trim()} ` : "";
+  setVoiceStatus("Requesting microphone access...");
+  const mic = await ensureMicrophoneReady();
+  if (!mic.ok) {
+    voiceErrorMessage = mic.message;
+    setVoiceStatus(mic.message);
+    return;
+  }
+
+  setVoiceStatus("Starting microphone...");
+  try {
+    voiceRecognition.start();
+  } catch (error) {
+    const message = voiceIsListening
+      ? "Voice capture is already running. Stop it first or wait a moment."
+      : humanVoiceError(error?.name || error?.message, "Buksy could not start voice capture.");
+    voiceErrorMessage = message;
+    setVoiceStatus(message);
+    flash(message);
+  }
+}
 
 if (SpeechRecognitionCtor) {
   voiceRecognition = new SpeechRecognitionCtor();
   voiceRecognition.lang = "en-US";
   voiceRecognition.continuous = true;
   voiceRecognition.interimResults = true;
+  voiceRecognition.maxAlternatives = 1;
 
   voiceRecognition.onstart = () => {
-    if (ui.voiceStatus) ui.voiceStatus.textContent = "Listening... speak naturally and Buksy will capture the transcript.";
+    voiceIsListening = true;
+    voiceErrorMessage = "";
+    setVoiceStatus(activeVoiceTarget.startMessage || "Listening...");
   };
 
   voiceRecognition.onresult = (event) => {
@@ -1948,32 +2189,56 @@ if (SpeechRecognitionCtor) {
         interim += result[0].transcript;
       }
     }
-    if (ui.voiceTranscript) {
-      ui.voiceTranscript.value = `${voiceTranscriptBuffer}${interim}`.trim();
+    if (activeVoiceTarget.input) {
+      activeVoiceTarget.input.value = `${voiceTranscriptBuffer}${interim}`.trim();
     }
   };
 
   voiceRecognition.onerror = (event) => {
-    if (ui.voiceStatus) ui.voiceStatus.textContent = `Voice capture error: ${event.error}`;
+    voiceIsListening = false;
+    voiceErrorMessage = humanVoiceError(event.error, `Voice capture error: ${event.error}`);
+    setVoiceStatus(voiceErrorMessage);
   };
 
   voiceRecognition.onend = () => {
-    if (ui.voiceStatus) ui.voiceStatus.textContent = "Voice capture stopped. You can keep editing the transcript before processing it.";
+    const hadError = Boolean(voiceErrorMessage);
+    voiceIsListening = false;
+    setVoiceStatus(
+      hadError
+        ? voiceErrorMessage
+        : "Voice capture stopped. You can keep editing the transcript before processing it."
+    );
   };
-} else if (ui.voiceStatus) {
-  ui.voiceStatus.textContent = "This browser does not expose speech recognition, so paste your transcript manually.";
+} else {
+  if (ui.voiceStatus) {
+    ui.voiceStatus.textContent = "This browser does not expose speech recognition, so paste your transcript manually.";
+  }
+  if (ui.voiceCommandStatus) {
+    ui.voiceCommandStatus.textContent = "This browser does not expose speech recognition, so paste your command manually.";
+  }
 }
 
-ui.voiceStartBtn?.addEventListener("click", () => {
-  if (!voiceRecognition) {
-    flash("Voice capture is not available in this browser.");
-    return;
-  }
-  voiceTranscriptBuffer = ui.voiceTranscript?.value ? `${ui.voiceTranscript.value.trim()} ` : "";
-  voiceRecognition.start();
+ui.voiceStartBtn?.addEventListener("click", async () => {
+  await beginVoiceCapture(
+    ui.voiceTranscript,
+    ui.voiceStatus,
+    "Listening for a journal note... speak naturally and Buksy will capture the transcript."
+  );
 });
 
 ui.voiceStopBtn?.addEventListener("click", () => {
+  voiceRecognition?.stop();
+});
+
+ui.voiceCommandStartBtn?.addEventListener("click", async () => {
+  await beginVoiceCapture(
+    ui.voiceCommandTranscript,
+    ui.voiceCommandStatus,
+    "Listening for a command... speak naturally and Buksy will translate it into actions."
+  );
+});
+
+ui.voiceCommandStopBtn?.addEventListener("click", () => {
   voiceRecognition?.stop();
 });
 
